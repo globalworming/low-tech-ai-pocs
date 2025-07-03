@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / dll files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+
+# Distribution / packaging
+.Python
+env/
+venv/
+lib/
+build/
+develop-eggs/
+dist/
+eggs/
+*.egg-info
+.installed.cfg
+*.egg
+
+# Editors
+*.swp
+*~
+.DS_Store
+.vscode/
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# OS generated files
+.Trash/
+
+# Testing
+.coverage
+.pytest_cache/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
