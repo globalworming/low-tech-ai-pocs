@@ -11,10 +11,10 @@ def generate_description(image_path, model_path, mmproj_path):
     llm = Llama(
         model_path=model_path,
         chat_handler=chat_handler,
-        n_ctx=4096,  # Larger context for better responses
+        n_ctx=8192,  # Larger context for better responses
         n_threads=8, # Number of CPU threads to use
         n_batch=512,
-        verbose=True,
+        verbose=False,
         seed=42,  # For reproducible results
         temperature=0.1,  # Lower temperature for more focused responses
         top_p=0.9
@@ -28,20 +28,27 @@ def generate_description(image_path, model_path, mmproj_path):
 
     response = llm.create_chat_completion(
         messages=[
+             {
+                "role": "system",
+                "content": """You are an image analysis assistant that outputs structured JSON.
+Analyze the image and provide a JSON object with three keys:
+1. "summary": A brief one-sentence overview of the image.
+2. "setting": A description of the background, location, and lighting.
+3. "objects": An array of JSON objects, where each object has "item" (the name of the object), "color" (its primary color), and "position" (e.g., "center", "top-left", "foreground")."""
+            },
             {
                 "role": "user",
                 "content": [
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}},
-                    {"type": "text", "content": "Please describe what you see in this image in detail. Include objects, people, colors, and setting."}
+                    {"type": "text", "content": "office material on a table. describe the objects in the image."}
                 ]
             }
         ],
-        max_tokens=200,
-        temperature=0.1
+        max_tokens=8000,
+        response_format={"type": "json_object",},
+        stop=["Q:", "\n"], # Stop generating just before the model would generate a new question
     )
-    # Log the full response for debugging
-    print("Raw model response:")
-    print(response)
+
 
     return response['choices'][0]['message']['content']
 
