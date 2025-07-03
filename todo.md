@@ -4,7 +4,14 @@ to keep track of a minimalistic roadmap in the now/next/later format. usually th
 
 ## todo
 ### now
-
+- [ ] make it faster
+  - it seems the bottleneck is the image description, what options do we have that dont require better hardware
+  - cpu at 100, ram at 50,
+  - try:
+    - now: 
+      -
+    - next:
+      - Apply JPEG compression with 70% quality  
 
 
 ### next

@@ -6,56 +6,17 @@ import time
 import datetime
 import os
 
-def format_time(seconds):
-    """Format seconds into a human-readable string."""
-    seconds = int(seconds)
-    if seconds < 60:
-        return f"{seconds}s"
-    minutes, seconds = divmod(seconds, 60)
-    if minutes < 60:
-        return f"{minutes}m {seconds}s"
-    hours, minutes = divmod(minutes, 60)
-    return f"{hours}h {minutes}m {seconds}s"
-
 def generate_description(image_path, llm):
-    import time
-    from datetime import datetime
-    
-    print("Processing image and generating description...")
-    start_time = time.time()
-    last_update = start_time
-    
-def progress_callback(delta_tokens, total_tokens, current_tokens):
-    nonlocal last_update
-    now = time.time()
-    if now - last_update < 1.0:  # Update at most once per second
-        return
-    last_update = now
-    
-    elapsed = now - start_time
-    tokens_per_sec = current_tokens / elapsed if elapsed > 0 else 0
-    remaining_tokens = max(0, total_tokens - current_tokens)
-    eta = remaining_tokens / tokens_per_sec if tokens_per_sec > 0 else 0
-    
-    progress = (current_tokens / total_tokens * 100) if total_tokens > 0 else 0
-    print(f"\rProgress: {progress:.1f}% | "
-            f"Speed: {tokens_per_sec:.1f} tokens/s | "
-            f"ETA: {format_time(eta)}   ", end='', flush=True)
 
-try:
     with open(image_path, "rb") as f:
         image_bytes = f.read()
     
     # Convert image bytes to base64
     image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-    
-    # Get image processing time
-    image_process_time = time.time() - start_time
-    print(f"Image processed in {image_process_time:.1f}s")
-    
+          
     response = llm.create_chat_completion(
         messages=[
-            {
+             {
                 "role": "system",
                 "content": """You are an image analysis assistant that outputs structured JSON.
 Analyze the image and provide a JSON object with three keys:
@@ -72,42 +33,14 @@ Analyze the image and provide a JSON object with three keys:
             }
         ],
         max_tokens=10000,
-        response_format={"type": "json_object"},
-        stop=["Q:", "\n"],
-        stream=True  # Enable streaming for progress updates
+        response_format={"type": "json_object",},
+        stop=["Q:", "\n"], # Stop generating just before the model would generate a new question
     )
-    
-    # Process the streaming response
-    full_response = ""
-    tokens_received = 0
-    start_gen_time = time.time()
-    
-    print("\nGenerating response...")
-    for chunk in response:
-        delta = chunk['choices'][0]['delta']
-        if 'content' in delta:
-            token = delta['content']
-            full_response += token
-            tokens_received += 1
-            
-            # Update progress every 5 tokens
-            if tokens_received % 5 == 0:
-                elapsed = time.time() - start_gen_time
-                tokens_per_sec = tokens_received / elapsed if elapsed > 0 else 0
-                remaining = max(0, len(full_response) * 0.75)  # Estimate remaining tokens
-                eta = remaining / tokens_per_sec if tokens_per_sec > 0 else 0
-                
-                print(f"\rTokens: {tokens_received} | "
-                        f"Speed: {tokens_per_sec:.1f} tokens/s | "
-                        f"ETA: {format_time(eta)}   ", end='', flush=True)
-    
-    # Final progress update
-    total_time = time.time() - start_time
-    print(f"\n\nGeneration complete! Total time: {format_time(total_time)}")
-    print(f"Average speed: {tokens_received/total_time:.1f} tokens/s")
-    
-    # Format the response to match the expected structure
-    return {'choices': [{'message': {'content': full_response}}]}
+
+    print("raw response")
+    print(response)
+
+    return response['choices'][0]['message']['content']
 
 def run_continuous_describe(llm, output_dir='descriptions', sleep_seconds=0):
     """
