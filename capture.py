@@ -15,8 +15,8 @@ def capture_images(interval=5, output_dir='captures'):
     os.makedirs(output_dir, exist_ok=True)
     
     # Initialize the camera
-    cam = cv2.VideoCapture(0)
-    if not cam.isOpened():
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
         print("Error: Could not open webcam")
         return False
         
@@ -32,7 +32,7 @@ def capture_images(interval=5, output_dir='captures'):
             current_time = time.time()
             
             # Capture frame
-            ret, frame = cam.read()
+            ret, frame = cap.read()
             if not ret:
                 print("Failed to grab frame.")
                 break
@@ -55,7 +55,7 @@ def capture_images(interval=5, output_dir='captures'):
                 
     finally:
         # Clean up
-        cam.release()
+        cap.release()
         cv2.destroyAllWindows()
         print("Webcam released")
     
