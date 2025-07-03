@@ -5,7 +5,7 @@ Command-line interface for the Image Processor.
 import argparse
 import sys
 from pathlib import Path
-from image_processor.file_utils import get_latest_image
+from image_processor.file_utils import get_latest_image, save_description
 
 from image_processor.config import (
     get_default_paths,
@@ -86,21 +86,23 @@ def main():
     # Create output directory if it doesn't exist
     args.output_dir.mkdir(parents=True, exist_ok=True)
     
-    # Initialize the analyzer
-    analyzer = ImageAnalyzer(
+    # Initialize the LLM client
+    from image_processor.llm_client import LLMClient
+    llm_client = LLMClient(
         model_path=str(args.model),
-        mmproj_path=str(args.mmproj),
-        output_dir=args.output_dir if not args.no_save else None,
-        verbose=True
+        mmproj_path=str(args.mmproj)
     )
+    
+    # Initialize the analyzer with the LLM client
+    analyzer = ImageAnalyzer(llm_client=llm_client)
     
     try:
         if args.continuous:
             # Run in continuous mode
-            analyzer.run_continuous_analysis(
+            analyzer.run_continuous_describe(
                 image_dir=args.capture_dir,
-                interval=args.interval,
-                save_output=not args.no_save
+                output_dir=args.output_dir,
+                sleep_seconds=args.interval
             )
         else:
             # Single image mode
@@ -110,10 +112,21 @@ def main():
                 # Use the latest image in the capture directory
                 image_path = get_latest_image(args.capture_dir)
             
-            analyzer.analyze_image(
-                str(image_path),
-                save_output=not args.no_save
+            description = analyzer.generate_description(
+                str(image_path)
             )
+            
+            # Save the description to a file if requested
+            if not args.no_save:
+                # Convert description to JSON string if it's a dictionary
+                if isinstance(description, dict):
+                    import json
+                    description = json.dumps(description, indent=2)
+                save_description(description, args.output_dir)
+                
+            # Print the description
+            print("\nDescription:")
+            print(description if isinstance(description, str) else str(description))
     except KeyboardInterrupt:
         print("\nOperation cancelled by user.")
         sys.exit(0)

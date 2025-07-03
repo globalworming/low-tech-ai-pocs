@@ -70,15 +70,27 @@ class LLMClient:
         """
         # Set default prompts if not provided
         if system_prompt is None:
-            system_prompt = """You are an image analysis assistant that outputs structured JSON.
-            Analyze the image and provide a JSON object with three keys:
-            1. "summary": A brief one-sentence overview of the image.
-            2. "setting": A description of the background, location, and lighting.
-            3. "objects": An array of JSON objects, where each object has "item" (the name of the object), 
-               "color" (its primary color), and "position" (e.g., "center", "top-left", "foreground")."""
+            system_prompt = """do image analysis, output structured JSON. example:
+            ```json
+            {
+               "objects": [ 
+                  {
+                     "item": "cup",
+                     "color": "blue",
+                     "position": "left of fork"
+                  },
+                  {
+                     "item": "fork",
+                     "color": "blue",
+                     "position": "center"
+                  }
+               ] 
+            }
+            ```
+            """
         
         if user_prompt is None:
-            user_prompt = "office material on a table. describe all objects in the image and their positions to each other"
+            user_prompt = "detect up to 10 objects in the image and their positions to each other"
         
         # Read and encode the image
         with open(image_path, "rb") as f:
@@ -128,7 +140,7 @@ class LLMClient:
                 if tokens_received % 5 == 0:
                     elapsed = time.time() - start_gen_time
                     tokens_per_sec = tokens_received / elapsed if elapsed > 0 else 0
-                    remaining = max(0, len(full_response) * 0.75)  # Estimate remaining tokens
+                    remaining = max(0, gen_params['max_tokens'] - tokens_received)  # Estimate remaining tokens
                     eta = remaining / tokens_per_sec if tokens_per_sec > 0 else 0
                     
                     print(f"\rTokens: {tokens_received} | "
@@ -143,9 +155,5 @@ class LLMClient:
         print(f"\n\nGeneration complete! Total time: {format_time(total_time)}")
         print(f"Average speed: {avg_speed:.1f} tokens/s")
         
-        return {
-            "content": full_response,
-            "tokens_generated": tokens_received,
-            "generation_time": total_time,
-            "tokens_per_second": avg_speed
-        }
+        # Return the JSON response directly as a string
+        return full_response

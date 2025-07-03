@@ -4,25 +4,25 @@ Configuration settings for the Image Processor.
 from pathlib import Path
 
 # Default paths
-DEFAULT_MODEL_PATH = "/home/t430s/models/llava-llama-3/llava-llama-3-8b-v1_1-int4.gguf"
-DEFAULT_MMPROJ_PATH = "/home/t430s/models/llava-llama-3/llava-llama-3-8b-v1_1-mmproj-f16.gguf"
+DEFAULT_MODEL_PATH = "~/models/llava-llama-3/llava-llama-3-8b-v1_1-int4.gguf"
+DEFAULT_MMPROJ_PATH = "~/models/llava-llama-3/llava-llama-3-8b-v1_1-mmproj-f16.gguf"
 DEFAULT_CAPTURE_DIR = "captures"
 DEFAULT_OUTPUT_DIR = "descriptions"
 
 # Model parameters
 DEFAULT_MODEL_PARAMS = {
-    "n_ctx": 8192,  # Context window size
+    "n_ctx": 65536,  # Context window size
     "n_threads": 8,  # Number of CPU threads
-    "n_batch": 2048,  # Batch size for prompt processing
+    "n_batch": 512,  # Batch size for prompt processing
     "seed": 42,  # Random seed for reproducibility
     "verbose": True  # Show detailed logs
 }
 
 # Generation parameters
 DEFAULT_GEN_PARAMS = {
-    "max_tokens": 10000,
-    "temperature": 0.1,
+    "max_tokens": 1024,
     "top_p": 0.9,
+    "response_format": {"type": "json_object",},
     "stop": ["Q:", "\n"]
 }
 

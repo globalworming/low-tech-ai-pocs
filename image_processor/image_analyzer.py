@@ -2,123 +2,122 @@
 Image analysis functionality for the Image Processor.
 """
 import time
+import json
+from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Union
 
 from .llm_client import LLMClient
-from .file_utils import save_description, get_latest_image
+from .file_utils import get_latest_image
 
 class ImageAnalyzer:
-    """Handles image analysis using an LLM client."""
+    """
+    Handles image analysis using a language model for generating descriptions.
+    """
     
-    def __init__(
-        self, 
-        model_path: str, 
-        mmproj_path: str,
-        output_dir: Optional[str] = None,
-        **llm_kwargs
-    ):
+    def __init__(self, llm_client: LLMClient):
         """
-        Initialize the ImageAnalyzer.
+        Initialize the ImageAnalyzer with an LLMClient.
         
         Args:
-            model_path: Path to the LLaMA model file.
-            mmproj_path: Path to the multimodal projection file.
-            output_dir: Directory to save output files.
-            **llm_kwargs: Additional arguments for the LLM client.
+            llm_client: Initialized LLMClient instance for making inference calls
         """
-        self.llm_client = LLMClient(model_path, mmproj_path, **llm_kwargs)
-        self.output_dir = Path(output_dir) if output_dir else None
+        self.llm = llm_client
     
-    def analyze_image(
-        self, 
-        image_path: str,
-        save_output: bool = True,
-        **kwargs
-    ) -> Dict[str, Any]:
+    def generate_description(self, image_path: Union[str, Path]) -> Dict[str, Any]:
         """
-        Analyze an image and generate a description.
+        Generate a structured description of an image.
         
         Args:
-            image_path: Path to the image file.
-            save_output: Whether to save the output to a file.
-            **kwargs: Additional arguments for the LLM client.
+            image_path: Path to the image file to analyze
             
         Returns:
-            Dictionary containing the analysis results and metadata.
+            Dictionary containing the generated description
         """
-        print(f"Analyzing image: {image_path}")
-        start_time = time.time()
-        
-        # Generate the description
-        result = self.llm_client.describe_image(image_path, **kwargs)
-        
-        # Save the output if requested
-        output_path = None
-        if save_output and self.output_dir:
-            output_path = save_description(
-                result["content"],
-                output_dir=self.output_dir
-            )
-            print(f"Output saved to: {output_path}")
-        
-        # Calculate total processing time
-        total_time = time.time() - start_time
-        
-        return {
-            "content": result["content"],
-            "output_path": str(output_path) if output_path else None,
-            "processing_time": total_time,
-            "tokens_generated": result["tokens_generated"],
-            "tokens_per_second": result["tokens_per_second"]
-        }
-    
-    def analyze_latest_image(
-        self,
-        image_dir: Optional[str] = None,
-        **kwargs
-    ) -> Dict[str, Any]:
-        """
-        Analyze the most recent image in a directory.
-        
-        Args:
-            image_dir: Directory containing images. If None, uses the default.
-            **kwargs: Additional arguments for analyze_image.
+        if not Path(image_path).exists():
+            raise FileNotFoundError(f"Image file not found: {image_path}")
             
-        Returns:
-            Dictionary containing the analysis results and metadata.
-        """
-        image_path = get_latest_image(image_dir)
-        return self.analyze_image(str(image_path), **kwargs)
+        try:
+            # Use the LLM client to generate the description
+            response = self.llm.describe_image(str(image_path))
+            print(response)
+            # Parse the response if it's a JSON string
+            if isinstance(response, str):
+                response = json.loads(response)
+                
+            return response
+            
+        except Exception as e:
+            raise RuntimeError(f"Error generating description: {str(e)}")
     
-    def run_continuous_analysis(
-        self,
-        image_dir: Optional[str] = None,
-        interval: float = 0,
-        **kwargs
+    def run_continuous_describe(
+        self, 
+        input_dir: Union[str, Path],
+        output_dir: Union[str, Path] = 'descriptions',
+        sleep_seconds: int = 0
     ) -> None:
         """
-        Continuously analyze new images as they appear.
+        Continuously monitor an input directory for new images and generate descriptions.
         
         Args:
-            image_dir: Directory to watch for new images.
-            interval: Time to wait between checks (seconds).
-            **kwargs: Additional arguments for analyze_latest_image.
+            input_dir: Directory to monitor for new images
+            output_dir: Directory to save description files
+            sleep_seconds: Time to sleep between checks (0 for no sleep)
         """
-        print("Starting continuous image analysis...")
-        print(f"Watching directory: {image_dir}")
-        print(f"Check interval: {interval} seconds")
+        input_dir = Path(input_dir)
+        output_dir = Path(output_dir)
+        
+        # Create output directory if it doesn't exist
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        print(f"Starting continuous describe loop")
+        print(f"Input directory: {input_dir}")
+        print(f"Output directory: {output_dir}")
+        print(f"Sleep interval: {sleep_seconds} seconds")
         print("Press Ctrl+C to stop")
         
         try:
             while True:
+                image_file = get_latest_image(input_dir)
+                print(f"Using latest image: {image_file}")
+                
+                if not image_file or not image_file.exists():
+                    print(f"Warning: Image file {image_file} not found. Waiting...")
+                    time.sleep(sleep_seconds)
+                    continue
+                
+                # Generate timestamp for filename
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]  # milliseconds
+                output_file = output_dir / f"description_{timestamp}.json"
+                
                 try:
-                    self.analyze_latest_image(image_dir=image_dir, **kwargs)
-                    print(f"Waiting {interval} seconds before next check...")
-                    time.sleep(interval)
-                except FileNotFoundError as e:
-                    print(f"Error: {e}. Waiting for images...")
-                    time.sleep(1)
+                    # Generate description
+                    print(f"Generating description at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}...")
+                    description = self.generate_description(image_file)
+                    
+                    print(description)
+                    # Create response object with metadata
+                    response_data = {
+                        "timestamp": timestamp,
+                        "iso_timestamp": datetime.now().isoformat(),
+                        "image_file": str(image_file.absolute()),
+                        "description": description
+                    }
+                    
+                    # Write to JSON file
+                    with open(output_file, 'w') as f:
+                        json.dump(response_data, f, indent=2)
+                    
+                    print(f"Description saved to: {output_file}")
+                    
+                except Exception as e:
+                    print(f"Error generating description: {e}")
+                    # Still sleep to avoid tight error loop
+                
+                # Wait before next iteration if needed
+                if sleep_seconds > 0:
+                    time.sleep(sleep_seconds)
+                    
         except KeyboardInterrupt:
-            print("\nStopping continuous analysis...")
+            print("\nStopping continuous describe loop...")
             print("Goodbye!")
