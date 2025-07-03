@@ -12,8 +12,9 @@ def generate_description(image_path, model_path, mmproj_path):
         model_path=model_path,
         chat_handler=chat_handler,
         n_ctx=2048,  # Context size
-        n_threads=4, # Number of CPU threads to use
-        verbose=False
+        n_threads=8, # Number of CPU threads to use
+        n_batch=512,
+        verbose=True
     )
 
     with open(image_path, "rb") as f:
