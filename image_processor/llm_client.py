@@ -70,23 +70,9 @@ class LLMClient:
         """
         # Set default prompts if not provided
         if system_prompt is None:
-            system_prompt = """do image analysis, output structured JSON. example:
+            system_prompt = """do image analysis, output structured json. example:
             ```json
-            {
-               "objects": [ 
-                  {
-                     "item": "cup",
-                     "color": "blue",
-                     "position": "left of fork"
-                  },
-                  {
-                     "item": "fork",
-                     "color": "blue",
-                     "position": "center"
-                  }
-               ] 
-            }
-            ```
+            {"summary":"A blue cup and fork on a surface","setting":"Indoor setting with neutral background","objects":[{"item":"cup","color":"blue","position":"left of fork"},{"item":"fork","color":"blue","position":"center"}]}
             """
         
         if user_prompt is None:
