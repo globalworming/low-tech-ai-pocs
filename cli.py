@@ -5,6 +5,7 @@ Command-line interface for the Image Processor.
 import argparse
 import sys
 from pathlib import Path
+from image_processor.file_utils import get_latest_image
 
 from image_processor.config import (
     get_default_paths,
