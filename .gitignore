@@ -36,3 +36,5 @@ eggs/
 
 # Jupyter Notebook
 .ipynb_checkpoints/
+
+.windsurf/rules/\.local.*\.md
