@@ -39,6 +39,10 @@ def generate_description(image_path, model_path, mmproj_path):
         max_tokens=200,
         temperature=0.1
     )
+    # Log the full response for debugging
+    print("Raw model response:")
+    print(response)
+
     return response['choices'][0]['message']['content']
 
 if __name__ == '__main__':
