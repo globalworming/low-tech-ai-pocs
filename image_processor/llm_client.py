@@ -83,7 +83,8 @@ class LLMClient:
         # Read and encode the image
         with open(image_path, "rb") as f:
             image_bytes = f.read()
-        image_base64 = image_bytes.hex()
+        import base64
+        image_base64 = base64.b64encode(image_bytes).decode('utf-8')
         
         # Prepare messages
         messages = [
