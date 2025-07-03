@@ -32,8 +32,8 @@ Analyze the image and provide a JSON object with three keys:
                 ]
             }
         ],
-        max_tokens=10000,
-        response_format={"type": "json_object",},
+        max_tokens=2000,
+        #response_format={"type": "json_object",},
         stop=["Q:", "\n"], # Stop generating just before the model would generate a new question
     )
 
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     llm = Llama(
         model_path=llava_model,
         chat_handler=chat_handler,
-        n_ctx=8192,  # Larger context for better responses
+        n_ctx=65536,  # Larger context for better responses
         n_threads=8,  # Number of CPU threads to use
         n_batch=512,
         verbose=True,
