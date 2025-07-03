@@ -5,7 +5,6 @@ Command-line interface for the Image Processor.
 import argparse
 import sys
 from pathlib import Path
-from image_processor.file_utils import get_latest_image, save_description
 
 from image_processor.config import (
     get_default_paths,
@@ -61,15 +60,10 @@ def parse_args():
     # Runtime options
     runtime_group = parser.add_argument_group('Runtime Options')
     runtime_group.add_argument(
-        '--continuous',
-        action='store_true',
-        help='Run in continuous mode, watching for new images'
-    )
-    runtime_group.add_argument(
         '--interval',
         type=float,
         default=0,
-        help='Time to wait between checks in continuous mode (seconds)'
+        help='Time to wait between checks (seconds)'
     )
     runtime_group.add_argument(
         '--no-save',
@@ -97,36 +91,12 @@ def main():
     analyzer = ImageAnalyzer(llm_client=llm_client)
     
     try:
-        if args.continuous:
-            # Run in continuous mode
-            analyzer.run_continuous_describe(
-                image_dir=args.capture_dir,
-                output_dir=args.output_dir,
-                sleep_seconds=args.interval
-            )
-        else:
-            # Single image mode
-            if args.image:
-                image_path = args.image
-            else:
-                # Use the latest image in the capture directory
-                image_path = get_latest_image(args.capture_dir)
-            
-            description = analyzer.generate_description(
-                str(image_path)
-            )
-            
-            # Save the description to a file if requested
-            if not args.no_save:
-                # Convert description to JSON string if it's a dictionary
-                if isinstance(description, dict):
-                    import json
-                    description = json.dumps(description, indent=2)
-                save_description(description, args.output_dir)
-                
-            # Print the description
-            print("\nDescription:")
-            print(description if isinstance(description, str) else str(description))
+        # Run in continuous mode
+        analyzer.run_continuous_describe(
+            input_dir=args.capture_dir,
+            output_dir=args.output_dir,
+            sleep_seconds=args.interval
+        )
     except KeyboardInterrupt:
         print("\nOperation cancelled by user.")
         sys.exit(0)
