@@ -13,7 +13,7 @@ def generate_description(image_path, llm):
     
     # Convert image bytes to base64
     image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-
+          
     response = llm.create_chat_completion(
         messages=[
              {
@@ -37,23 +37,27 @@ Analyze the image and provide a JSON object with three keys:
         stop=["Q:", "\n"], # Stop generating just before the model would generate a new question
     )
 
+    print("raw response")
+    print(response)
 
     return response['choices'][0]['message']['content']
 
-def run_continuous_describe(llm, image_file, output_dir='descriptions', sleep_seconds=0):
+def run_continuous_describe(llm, output_dir='descriptions', sleep_seconds=0):
     """
     Runs describe in a continuous loop, writing each response to a timestamped JSON file.
     """
     # Create output directory if it doesn't exist
     os.makedirs(output_dir, exist_ok=True)
     
-    print(f"Starting continuous describe loop for {image_file}")
+    print(f"Starting continuous describe loop")
     print(f"Output directory: {output_dir}")
     print(f"Sleep interval: {sleep_seconds} seconds")
     print("Press Ctrl+C to stop")
     
     try:
         while True:
+            image_file = get_latest_image('captures')
+            print(f"Using latest image: {image_file}")
             # Check if image file exists
             if not os.path.exists(image_file):
                 print(f"Warning: Image file {image_file} not found. Waiting...")
@@ -94,8 +98,28 @@ def run_continuous_describe(llm, image_file, output_dir='descriptions', sleep_se
         print("\nStopping continuous describe loop...")
         print("Goodbye!")
 
-if __name__ == '__main__':
-    image_file = 'webcam_capture.jpg'
+def get_latest_image(folder='captures'):
+    """Get the most recently created image file from the specified folder."""
+    import os
+    from pathlib import Path
+    
+    # Ensure the folder exists
+    folder_path = Path(folder)
+    if not folder_path.exists() or not folder_path.is_dir():
+        raise FileNotFoundError(f"The folder '{folder}' does not exist")
+    
+    # Find all image files in the folder
+    image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.gif'}
+    image_files = [f for f in folder_path.iterdir() 
+                  if f.is_file() and f.suffix.lower() in image_extensions]
+    
+    if not image_files:
+        raise FileNotFoundError(f"No image files found in '{folder}'")
+    
+    # Return the most recently created file
+    return str(max(image_files, key=os.path.getctime))
+
+if __name__ == '__main__':    
     llava_model = '/home/t430s/models/llava-llama-3/llava-llama-3-8b-v1_1-int4.gguf'
     llava_mmproj = '/home/t430s/models/llava-llama-3/llava-llama-3-8b-v1_1-mmproj-f16.gguf'
     
@@ -104,17 +128,16 @@ if __name__ == '__main__':
     """
     chat_handler = Llava15ChatHandler(clip_model_path=llava_mmproj)
 
+    # Initialize Llama with logging disabled
     llm = Llama(
         model_path=llava_model,
         chat_handler=chat_handler,
         n_ctx=8192,  # Larger context for better responses
-        n_threads=8, # Number of CPU threads to use
-        n_batch=512,
-        verbose=False,
+        n_threads=8,  # Number of CPU threads to use
+        n_batch=2048,
+        verbose=True,
         seed=42,  # For reproducible results
-        temperature=0.1,  # Lower temperature for more focused responses
-        top_p=0.9
     )
 
     # Run continuous describe loop
-    run_continuous_describe(llm, image_file)
+    run_continuous_describe(llm)
