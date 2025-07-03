@@ -1,5 +1,6 @@
 from llama_cpp import Llama
 from llama_cpp.llama_chat_format import Llava15ChatHandler
+import base64
 
 def generate_description(image_path, model_path, mmproj_path):
     """
@@ -15,7 +16,11 @@ def generate_description(image_path, model_path, mmproj_path):
         verbose=False
     )
 
-    image_bytes = open(image_path, "rb").read()
+    with open(image_path, "rb") as f:
+        image_bytes = f.read()
+    
+    # Convert image bytes to base64
+    image_base64 = base64.b64encode(image_bytes).decode('utf-8')
 
     response = llm.create_chat_completion(
         messages=[
@@ -26,7 +31,7 @@ def generate_description(image_path, model_path, mmproj_path):
             {
                 "role": "user",
                 "content": [
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{llm.detokenize(llm.tokenize(image_bytes)).decode('utf-8')}"}},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}},
                     {"type": "text", "content": "Describe this image."}
                 ]
             }
