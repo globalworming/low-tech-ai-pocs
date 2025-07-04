@@ -22,7 +22,7 @@ DEFAULT_MODEL_PARAMS = {
 DEFAULT_GEN_PARAMS = {
     "max_tokens": 512,
     #"top_p": 0.9,
-    "response_format": {"type": "json_object",},
+    #"response_format": {"type": "json_object",},
     #"stop": ["Q:", "\n"]
 }
 
