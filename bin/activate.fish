@@ -33,7 +33,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV /home/t430s/low-tech-ai-pocs
+set -gx VIRTUAL_ENV /home/wormi/workspace/globalworming/low-tech-ai-pocs
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/"bin $PATH

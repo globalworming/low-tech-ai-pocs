@@ -11,17 +11,17 @@ DEFAULT_OUTPUT_DIR = "descriptions"
 
 # Model parameters
 DEFAULT_MODEL_PARAMS = {
-    "n_ctx": 8192,  # Context window size
+    "n_ctx": 65536,  # Context window size
     "n_threads": 8,  # Number of CPU threads
-    "n_batch": 512,  # Batch size for prompt processing
-    "seed": 42,  # Random seed for reproducibility
+    "n_batch": 8192,  # Batch size for prompt processing
+    #"seed": 42,  # Random seed for reproducibility
     "verbose": True  # Show detailed logs
 }
 
 # Generation parameters
 DEFAULT_GEN_PARAMS = {
     "max_tokens": 1024,
-    "top_p": 0.9,
+    #"top_p": 0.9,
     "response_format": {"type": "json_object",},
     #"stop": ["Q:", "\n"]
 }

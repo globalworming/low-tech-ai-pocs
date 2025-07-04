@@ -1,4 +1,4 @@
-#!/home/t430s/my_project_env/bin/python3
+#!/home/wormi/workspace/globalworming/low-tech-ai-pocs/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys

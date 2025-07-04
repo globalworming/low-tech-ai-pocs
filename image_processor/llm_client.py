@@ -70,13 +70,27 @@ class LLMClient:
         """
         # Set default prompts if not provided
         if system_prompt is None:
-            system_prompt = """do image analysis, output structured json. example:
-            ```json
-            {"summary":"A blue cup and fork on a surface","setting":"Indoor setting with neutral background","objects":[{"item":"cup","color":"blue","position":"left of fork"},{"item":"fork","color":"blue","position":"center"}]}
+            system_prompt = """
+You are an AI assistant that analyzes images and responds with structured JSON descriptions.
+
+You must respond with a JSON object in this exact format:
+{
+  "summary": "Brief one-sentence description of the image",
+  "setting": "Description of the location/environment", 
+  "objects": [
+    {
+      "name": "object name",
+      "description": "detailed description",
+      "location": "where in the image"
+    }
+  ]
+}
+
+Do not include any text outside the JSON object. Focus on being accurate and detailed.
             """
         
         if user_prompt is None:
-            user_prompt = "detect up to 10 objects in the image and their positions to each other"
+            user_prompt = "Analyze this image and provide a detailed JSON description following the specified format."
         
         # Read and encode the image
         with open(image_path, "rb") as f:
@@ -86,12 +100,15 @@ class LLMClient:
         
         # Prepare messages
         messages = [
-            {"role": "system", "content": system_prompt},
             {
-                "role": "user",
+                "role": "system",
+                "content": system_prompt.strip(),
+            },
+            {
+                "role": "user", 
                 "content": [
+                    {"type": "text", "text": user_prompt},
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}},
-                    {"type": "text", "content": user_prompt}
                 ]
             }
         ]
@@ -121,9 +138,10 @@ class LLMClient:
                 token = delta['content']
                 full_response += token
                 tokens_received += 1
+                #print(full_response)
                 
                 # Update progress every 5 tokens
-                if tokens_received % 5 == 0:
+                if tokens_received % 25 == 0:
                     elapsed = time.time() - start_gen_time
                     tokens_per_sec = tokens_received / elapsed if elapsed > 0 else 0
                     remaining = max(0, gen_params['max_tokens'] - tokens_received)  # Estimate remaining tokens
@@ -141,5 +159,44 @@ class LLMClient:
         print(f"\n\nGeneration complete! Total time: {format_time(total_time)}")
         print(f"Average speed: {avg_speed:.1f} tokens/s")
         
-        # Return the JSON response directly as a string
-        return full_response
+        # Parse and return the JSON response
+        if not full_response.strip():
+            print("Warning: Empty response from LLM")
+            return {
+                "error": "Empty response from LLM",
+                "summary": "",
+                "setting": "",
+                "objects": []
+            }
+        
+        try:
+            # Try to extract JSON from the response
+            import json
+            import re
+            
+            # Look for JSON content between ```json and ``` or just parse the whole response
+            json_match = re.search(r'```json\s*({.*?})\s*```', full_response, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(1)
+            else:
+                # Try to find JSON-like content
+                json_match = re.search(r'{.*}', full_response, re.DOTALL)
+                if json_match:
+                    json_str = json_match.group(0)
+                else:
+                    json_str = full_response.strip()
+            
+            result = json.loads(json_str)
+            print(f"\nParsed JSON successfully: {json.dumps(result, indent=2)}")
+            return result
+            
+        except json.JSONDecodeError as e:
+            print(f"\nFailed to parse JSON: {e}")
+            print(f"Raw response: {repr(full_response)}")
+            return {
+                "error": f"JSON parsing failed: {str(e)}",
+                "raw_response": full_response,
+                "summary": "",
+                "setting": "",
+                "objects": []
+            }
