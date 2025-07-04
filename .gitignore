@@ -1,4 +1,5 @@
 descriptions/
+.env
 
 # Byte-compiled / optimized / dll files
 __pycache__/

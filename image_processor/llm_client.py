@@ -71,22 +71,8 @@ class LLMClient:
         # Set default prompts if not provided
         if system_prompt is None:
             system_prompt = """
-You are an AI assistant that analyzes images and responds with structured JSON descriptions.
-
-You must respond with a JSON object in this exact format:
-{
-  "summary": "Brief one-sentence description of the image",
-  "setting": "Description of the location/environment", 
-  "objects": [
-    {
-      "name": "object name",
-      "description": "detailed description",
-      "location": "where in the image"
-    }
-  ]
-}
-
-Do not include any text outside the JSON object. Focus on being accurate and detailed.
+You are an AI assistant that analyzes images and responds with brief descriptions.
+Focus on shapes, colors and relative positon. 
             """
         
         if user_prompt is None:
