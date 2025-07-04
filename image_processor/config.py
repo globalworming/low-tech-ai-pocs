@@ -20,7 +20,7 @@ DEFAULT_MODEL_PARAMS = {
 
 # Generation parameters
 DEFAULT_GEN_PARAMS = {
-    "max_tokens": 1024,
+    "max_tokens": 512,
     #"top_p": 0.9,
     "response_format": {"type": "json_object",},
     #"stop": ["Q:", "\n"]

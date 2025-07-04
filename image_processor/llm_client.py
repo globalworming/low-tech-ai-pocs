@@ -71,12 +71,59 @@ class LLMClient:
         # Set default prompts if not provided
         if system_prompt is None:
             system_prompt = """
-You are an AI assistant that analyzes images and responds with brief descriptions.
-Focus on shapes, colors and relative positon. 
-            """
+# summary
+You are computer vison model that analyzes images and responds with structured JSON. Scenes usually revolve around office material on a wooden table.
+
+## tone
+- neutral
+- professional
+- blunt
+- direct
+
+## focus on
+- verifiable physical properties like:
+    - shapes
+    - colors
+    - size
+    - count
+    - relative positions
+    - location
+
+## response format
+example for a single sticky note on a table with a marker next to it
+```json
+{
+    "summary": "a sticky note on a table",
+    "objects": [
+        {
+            "name": "sticky note",
+            "color": "yellow",
+            "shape": "rectangular",
+            "size": "small",
+            "count": 1,
+            "relative_position": "on the table close to the marker",
+            "location": "center of the table"
+        },
+        {
+            "name": "marker",
+            "color": "black",
+            "shape": "pen",
+            "size": "small",
+            "count": 1,
+            "relative_position": "left of yellow sticky note",
+            "location": "table center left"
+        }
+    ]
+}
+```
+
+## stop
+- when you are done
+- when you repeat yourself
+"""
         
         if user_prompt is None:
-            user_prompt = "Analyze this image and provide a detailed JSON description following the specified format."
+            user_prompt = "Analyze this image and provide JSON according to the schema `Image Description Schema`"
         
         # Read and encode the image
         with open(image_path, "rb") as f:
@@ -88,7 +135,7 @@ Focus on shapes, colors and relative positon.
         messages = [
             {
                 "role": "system",
-                "content": system_prompt.strip(),
+                "content": system_prompt,
             },
             {
                 "role": "user", 
