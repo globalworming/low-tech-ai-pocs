@@ -18,7 +18,7 @@ A collection of lightweight AI tools designed to run efficiently on resource-con
    ```bash
    python3 -m venv low-tech-ai-pocs
    cd low-tech-ai-pocs   
-   source low-tech-ai-pocs/bin/activate  
+   source bin/activate  
    python -m pip install --upgrade pip
    ```
 
