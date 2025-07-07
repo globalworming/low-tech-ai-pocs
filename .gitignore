@@ -42,3 +42,4 @@ eggs/
 .ipynb_checkpoints/
 
 .windsurf/rules/\.local.*\.md
+yolo11n.pt
