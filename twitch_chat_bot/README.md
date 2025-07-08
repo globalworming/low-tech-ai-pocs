@@ -40,3 +40,25 @@ The bot uses AutoBot for automatic OAuth handling:
 ```bash
 python bot.py
 ```
+## Usage
+
+- Users type `P1: message` to store P1 message
+- Users type `P2: message` to store P2 message
+- Bot posts all stored messages to cloud function every 60 seconds
+- Messages are cleared after successful POST
+
+## Cloud Function Payload
+
+The bot sends JSON payload:
+```json
+{
+  "timestamp": "2024-01-01T12:00:00",
+  "p1_messages": {
+    "username1": "message content",
+    "username2": "another message"
+  },
+  "p2_messages": {
+    "username1": "p2 message content"
+  }
+}
+```
