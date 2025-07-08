@@ -54,7 +54,7 @@ async def stream_events(request: Request):
                 
                 # Format message for SSE
                 event_data = {
-                    "id": str(random.randint(1000, 9999)),
+                    "id": str(random.randint(100000, 999999)),
                     "event": message.get("event_type", "update"),
                     "data": json.dumps(message.get("data", {}))
                 }
@@ -70,11 +70,90 @@ async def stream_events(request: Request):
     
     return EventSourceResponse(event_generator())
 
+@app.get("/start_round")
+async def start_round(duration: int = 50):
+    """
+    start the on screen countdown
+    """
+    message = {
+        "event_type": "start_round",
+        "data": {
+            "timestamp": asyncio.get_event_loop().time(),
+            "duration": duration
+        }
+    }
+    
+    await message_queue.put(message)
+    
+    return {"status": "success", "message": "Round started"}
+
+@app.get("/think")
+async def think(p1: str = "what next", p2: str = "what next"):
+    message = {
+        "event_type": "think",
+        "data": {
+            "timestamp": asyncio.get_event_loop().time(),
+            "p1": p1,
+            "p2": p2
+        }
+    }
+    
+    await message_queue.put(message)
+    
+    return {"status": "success", "message": "updated thinking"}
+
+@app.get("/show")
+async def show(summary: str = "FIXME"):
+    message = {
+        "event_type": "show",
+        "data": {
+            "timestamp": asyncio.get_event_loop().time(),
+            "summary": summary
+        }
+    }
+    
+    await message_queue.put(message)
+    
+    return {"status": "success", "message": "show result"}
+
+@app.get("/hide")
+async def hide():
+    message = {
+        "event_type": "hide",
+        "data": {
+            "timestamp": asyncio.get_event_loop().time(),
+        }
+    }
+    
+    await message_queue.put(message)
+    
+    return {"status": "success", "message": "hide result"}
+
+@app.get("/state")
+async def state(p1Name: str = "P1", p2Name: str = "P2", p1Health: int = 3, p2Health: int = 3, p1Wins: int = 0, p2Wins: int = 0):
+    """
+    Update game state information
+    Example: /state?p1Name=Fighter1&p2Name=Fighter2&p1Health=2&p2Health=3&p1Wins=1&p2Wins=0
+    """
+    message = {
+        "event_type": "state",
+        "data": {
+            "timestamp": asyncio.get_event_loop().time(),
+            "p1Name": p1Name,
+            "p2Name": p2Name,
+            "p1Health": p1Health,
+            "p2Health": p2Health,
+            "p1Wins": p1Wins,
+            "p2Wins": p2Wins
+        }
+    }
+    await message_queue.put(message)
+    return {"status": "success", "message": "state updated"}
+
 @app.post("/update_fighter")
 async def update_fighter(fighter_data: FighterUpdate):
     """
-    Test endpoint to update fighter information.
-    Puts data into the queue which will be sent via SSE.
+    update fighter information
     """
     message = {
         "event_type": "fighter_update",
@@ -86,9 +165,6 @@ async def update_fighter(fighter_data: FighterUpdate):
     }
     
     await message_queue.put(message)
-    
-    # Generate a random additional event for testing
-    await send_random_test_event()
     
     return {"status": "success", "message": "Fighter updated and events queued"}
 
@@ -135,10 +211,6 @@ async def startup_event():
     """
     print("SSE Server started successfully!")
     print("Available endpoints:")
-    print("  - GET  /events - SSE stream")
-    print("  - POST /update_fighter - Update fighter data")
-    print("  - POST /test_event - Trigger test event")
-    print("  - GET  /health - Health check")
 
 if __name__ == "__main__":
     import uvicorn
