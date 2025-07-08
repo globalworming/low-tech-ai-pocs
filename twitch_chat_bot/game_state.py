@@ -12,7 +12,7 @@ LOGGER = logging.getLogger(__name__)
 @dataclass
 class Figther:
     """Represents a worm in the game"""
-    name: str = "P1"
+    name: str = "FighterName"
     health: int = 3
     wins: int = 0
     
@@ -54,7 +54,6 @@ class GameState:
     """Manages the overall game state"""
     p1: Figther = field(default_factory=Figther)
     p2: Figther = field(default_factory=Figther)
-    is_active: bool = False
     
     def set_players(self, p1_name: str, p2_name: str) -> None:
         """Set player names and initialize game"""
@@ -67,12 +66,10 @@ class GameState:
         """Reset the game state"""
         self.p1.reset_health()
         self.p2.reset_health()
-        self.is_active = True
         LOGGER.info(f"Game reset")
     
     def end_game(self, winner: Optional[Figther] = None) -> None:
         """End the current game"""
-        self.is_active = False
         if winner:
             winner.add_win()
             LOGGER.info(f"Game ended - {winner.name} wins!")
@@ -81,9 +78,6 @@ class GameState:
     
     def check_game_over(self) -> Optional[Figther]:
         """Check if game is over and return winner if any"""
-        if not self.is_active:
-            return None
-            
         if not self.p1.is_alive() and not self.p2.is_alive():
             # Draw
             self.end_game()
@@ -112,15 +106,11 @@ class GameState:
         return {
             "p1": self.p1.to_dict(),
             "p2": self.p2.to_dict(),
-            "is_active": self.is_active,
             "current_round": self.current_round
         }
     
     def get_status(self) -> str:
         """Get formatted status string"""
-        if not self.is_active:
-            return "Game not active"
-        
         return (f"Round {self.current_round} | "
                 f"{self.p1.name}: {self.p1.health}HP ({self.p1.wins}W) | "
                 f"{self.p2.name}: {self.p2.health}HP ({self.p2.wins}W)")

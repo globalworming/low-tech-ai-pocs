@@ -28,9 +28,13 @@ LOGGER = logging.getLogger(__name__)
 
 class MinimalTwitchBot(commands.AutoBot):
     def __init__(self, *, token_database: asqlite.Pool, subs: list[eventsub.SubscriptionPayload]):
+        game_state.p1.name = "Snizzle"
+        game_state.p1.health = 1
+        game_state.p2.name = "Calvin"
+        game_state.p2.health = 2
         # Storage for P1 and P2 messages per user
-        self.p1_messages: Dict[str, str] = {}
-        self.p2_messages: Dict[str, str] = {}
+        self.p1_messages: Dict[str, str] = {"globalworming": "counters everything, goes hard"}
+        self.p2_messages: Dict[str, str] = {"globalworming": "best player ever, beatiful moves"}
         self.token_database = token_database
         
         super().__init__(
@@ -80,16 +84,18 @@ class MinimalTwitchBot(commands.AutoBot):
         async with self.token_database.acquire() as connection:
             await connection.execute(query, (resp.user_id, token, refresh))
         
-        LOGGER.info("Added token to database for user: %s", resp.user_id)
+        LOGGER.debug("Added token to database for user: %s", resp.user_id)
         return resp
 
     async def event_ready(self) -> None:
-        LOGGER.info("Bot ready | Bot ID: %s", self.bot_id)
+        LOGGER.debug("Bot ready | Bot ID: %s", self.bot_id)
 
     async def periodic_post(self):
         """Post messages to cloud function every 60 seconds"""
         while True:
-            await asyncio.sleep(POST_INTERVAL_SECONDS)
+            for remaining in range(POST_INTERVAL_SECONDS, 0, -1):
+                LOGGER.info(f"Next judge in {remaining}s...")
+                await asyncio.sleep(1)
             
             if not self.p1_messages and not self.p2_messages:
                 LOGGER.info("No messages to post")
@@ -98,10 +104,13 @@ class MinimalTwitchBot(commands.AutoBot):
             # Prepare payload
             payload = {
                 #"timestamp": datetime.now().isoformat(),
+       #         "p1_messages": list(self.p1_messages.values()),
+        #        "p2_messages": list(self.p2_messages.values()),
                 "p1_messages": list(self.p1_messages.values()),
                 "p2_messages": list(self.p2_messages.values()),
             }
             
+            LOGGER.info("payload: %r", payload)
             try:
                 response_text = None
                 async with aiohttp.ClientSession() as session:
@@ -114,25 +123,20 @@ class MinimalTwitchBot(commands.AutoBot):
                         LOGGER.info(f"Cloud function response ({response.status}): {response_text}")
                         
                 if response_text.lower().endswith("p1"):
-                    game_state.get_player_by_name("P2").take_damage(1)
+                    game_state.p2.take_damage(1)
                 elif response_text.lower().endswith("p2"):
-                    game_state.get_player_by_name("P1").take_damage(1)
+                    game_state.p1.take_damage(1)
                 elif response_text.lower().endswith("draw"):
-                    game_state.get_player_by_name("P1").take_damage(1)
-                    game_state.get_player_by_name("P2").take_damage(1)
-
-                LOGGER.info("game_state: %r", game_state)
-                if game_state.check_game_over():
-                    # FIXME later: call http set state
-
+                    game_state.p1.take_damage(1)
+                    game_state.p2.take_damage(1)
+                
+                if game_state.check_game_over():                    
                     # reset state after game over
                     game_state.reset_game()
-                    LOGGER.info("reset game_state: %r", game_state)
-
-                # Clear messages after successful post
-                self.p1_messages.clear()
-                self.p2_messages.clear()
-                LOGGER.info("Messages cleared")
+                    LOGGER.info("reset game_state")
+                    self.p1_messages.clear()
+                    self.p2_messages.clear()
+                    LOGGER.info("Messages cleared")
                 
             except Exception as e:
                 LOGGER.error(f"Failed to post to cloud function: {e}")
