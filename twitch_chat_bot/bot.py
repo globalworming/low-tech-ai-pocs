@@ -17,6 +17,7 @@ from config import (
     CLIENT_ID, CLIENT_SECRET, BOT_ID, OWNER_ID, JUDGE_CLOUD_FUNCTION_URL, 
     MESSAGE_MAX_LENGTH, POST_INTERVAL_SECONDS, JUDGE_CLOUD_FUNCTION_TOKEN
 )
+from game_state import game_state
 
 if TYPE_CHECKING:
     import sqlite3
@@ -98,10 +99,11 @@ class MinimalTwitchBot(commands.AutoBot):
             payload = {
                 #"timestamp": datetime.now().isoformat(),
                 "p1_messages": list(self.p1_messages.values()),
-                "p2_messages": list(self.p2_messages.values())
+                "p2_messages": list(self.p2_messages.values()),
             }
             
             try:
+                response_text = None
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
                         JUDGE_CLOUD_FUNCTION_URL,
@@ -111,6 +113,22 @@ class MinimalTwitchBot(commands.AutoBot):
                         response_text = await response.text()
                         LOGGER.info(f"Cloud function response ({response.status}): {response_text}")
                         
+                if response_text.lower().endswith("p1"):
+                    game_state.get_player_by_name("P2").take_damage(1)
+                elif response_text.lower().endswith("p2"):
+                    game_state.get_player_by_name("P1").take_damage(1)
+                elif response_text.lower().endswith("draw"):
+                    game_state.get_player_by_name("P1").take_damage(1)
+                    game_state.get_player_by_name("P2").take_damage(1)
+
+                LOGGER.info("game_state: %r", game_state)
+                if game_state.check_game_over():
+                    # FIXME later: call http set state
+
+                    # reset state after game over
+                    game_state.reset_game()
+                    LOGGER.info("reset game_state: %r", game_state)
+
                 # Clear messages after successful post
                 self.p1_messages.clear()
                 self.p2_messages.clear()
