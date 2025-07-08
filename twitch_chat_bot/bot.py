@@ -96,9 +96,9 @@ class MinimalTwitchBot(commands.AutoBot):
                 
             # Prepare payload
             payload = {
-                "timestamp": datetime.now().isoformat(),
-                "p1_messages": dict(self.p1_messages),
-                "p2_messages": dict(self.p2_messages)
+                #"timestamp": datetime.now().isoformat(),
+                "p1_messages": list(self.p1_messages.values()),
+                "p2_messages": list(self.p2_messages.values())
             }
             
             try:
