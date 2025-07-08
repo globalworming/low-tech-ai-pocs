@@ -47,13 +47,13 @@ class MinimalTwitchBot(commands.AutoBot):
         )
         
         # Start the periodic task
-        self.post_task = None
+        self.judge_task = None
 
     async def setup_hook(self) -> None:
         # Add our message handler component
         await self.add_component(MessageHandler(self))
         # Start periodic posting
-        self.post_task = asyncio.create_task(self.periodic_post())
+        self.judge_task = asyncio.create_task(self.periodic_jugdgement_post())
 
     async def event_oauth_authorized(self, payload: twitchio.authentication.UserTokenPayload) -> None:
         await self.add_token(payload.access_token, payload.refresh_token)
@@ -90,7 +90,9 @@ class MinimalTwitchBot(commands.AutoBot):
     async def event_ready(self) -> None:
         LOGGER.debug("Bot ready | Bot ID: %s", self.bot_id)
 
-    async def periodic_post(self):
+
+
+    async def periodic_jugdgement_post(self):
         """Post messages to cloud function every 60 seconds"""
         while True:
             for remaining in range(POST_INTERVAL_SECONDS, 0, -1):
