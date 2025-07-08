@@ -15,7 +15,7 @@ from twitchio import eventsub
 from twitchio.ext import commands
 from config import (
     CLIENT_ID, CLIENT_SECRET, BOT_ID, OWNER_ID, JUDGE_CLOUD_FUNCTION_URL, 
-    MESSAGE_MAX_LENGTH, POST_INTERVAL_SECONDS, JUDGE_CLOUD_FUNCTION_TOKEN
+    MESSAGE_MAX_LENGTH, POST_INTERVAL_SECONDS, JUDGE_CLOUD_FUNCTION_TOKEN, SERVER_URL
 )
 from game_state import game_state
 
@@ -121,7 +121,7 @@ class MinimalTwitchBot(commands.AutoBot):
                     async with session.post(
                         JUDGE_CLOUD_FUNCTION_URL,
                         json=payload,
-                        headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "role": "judge"}
+                        headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "x-role": "judge"}
                     ) as response:
                         response_text = await response.text()
                         LOGGER.info(f"Cloud function response ({response.status}): {response_text}")
@@ -133,6 +133,26 @@ class MinimalTwitchBot(commands.AutoBot):
                 elif response_text.lower().endswith("draw"):
                     game_state.p1.take_damage(1)
                     game_state.p2.take_damage(1)
+
+                # Update server state via REST call
+                try:
+                    state_url = f"{SERVER_URL}/state"
+                    params = {
+                        "p1Name": game_state.p1.name,
+                        "p2Name": game_state.p2.name,
+                        "p1Health": game_state.p1.health,
+                        "p2Health": game_state.p2.health,
+                        "p1Wins": game_state.p1.wins,
+                        "p2Wins": game_state.p2.wins
+                    }
+                    async with aiohttp.ClientSession() as state_session:
+                        async with state_session.get(state_url, params=params) as state_response:
+                            if state_response.status == 200:
+                                LOGGER.info("Successfully updated server state")
+                            else:
+                                LOGGER.warning(f"Server state update failed: {state_response.status}")
+                except Exception as e:
+                    LOGGER.error(f"Failed to update server state: {e}")
                 
                 if game_state.check_game_over():                    
                     # reset state after game over
@@ -159,7 +179,7 @@ class MinimalTwitchBot(commands.AutoBot):
                     async with session.post(
                         JUDGE_CLOUD_FUNCTION_URL,
                         json={"messages": list(self.p1_messages.values())},
-                        headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "role": "summary"}
+                        headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "x-role": "summary"}
                     ) as response:
                         response_text = await response.text()
                         LOGGER.info(f"Summary response ({response.status}) P1: {response_text}")
@@ -172,7 +192,7 @@ class MinimalTwitchBot(commands.AutoBot):
                     async with session.post(
                         JUDGE_CLOUD_FUNCTION_URL,
                         json={"messages": list(self.p2_messages.values())},
-                        headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "role": "summary"}
+                        headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "x-role": "summary"}
                     ) as response:
                         response_text = await response.text()
                         LOGGER.info(f"Summary response ({response.status}) P2: {response_text}")           
