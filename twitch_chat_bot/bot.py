@@ -14,8 +14,8 @@ import twitchio
 from twitchio import eventsub
 from twitchio.ext import commands
 from config import (
-    CLIENT_ID, CLIENT_SECRET, BOT_ID, OWNER_ID, CLOUD_FUNCTION_URL, 
-    MESSAGE_MAX_LENGTH, POST_INTERVAL_SECONDS
+    CLIENT_ID, CLIENT_SECRET, BOT_ID, OWNER_ID, JUDGE_CLOUD_FUNCTION_URL, 
+    MESSAGE_MAX_LENGTH, POST_INTERVAL_SECONDS, JUDGE_CLOUD_FUNCTION_TOKEN
 )
 
 if TYPE_CHECKING:
@@ -104,9 +104,9 @@ class MinimalTwitchBot(commands.AutoBot):
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
-                        CLOUD_FUNCTION_URL,
+                        JUDGE_CLOUD_FUNCTION_URL,
                         json=payload,
-                        headers={"Content-Type": "application/json"}
+                        headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}"}
                     ) as response:
                         response_text = await response.text()
                         LOGGER.info(f"Cloud function response ({response.status}): {response_text}")

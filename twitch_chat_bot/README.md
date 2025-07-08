@@ -25,7 +25,8 @@ TWITCH_CLIENT_ID=your_client_id_here
 TWITCH_CLIENT_SECRET=your_client_secret_here
 TWITCH_BOT_ID=your_bot_user_id
 TWITCH_OWNER_ID=your_personal_user_id
-CLOUD_FUNCTION_URL=https://your-cloud-function-url
+JUDGE_CLOUD_FUNCTION_URL=https://your-cloud-function-url
+JUDGE_CLOUD_FUNCTION_TOKEN="your_token"
 ```
 
 ### 4. OAuth Setup (Automatic)
