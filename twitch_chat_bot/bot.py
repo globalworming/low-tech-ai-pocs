@@ -46,14 +46,16 @@ class MinimalTwitchBot(commands.AutoBot):
             subscriptions=subs,
         )
         
-        # Start the periodic task
+        # Start the periodic tasks
         self.judge_task = None
+        self.summary_task = None
 
     async def setup_hook(self) -> None:
         # Add our message handler component
         await self.add_component(MessageHandler(self))
-        # Start periodic posting
+        # Start periodic tasks
         self.judge_task = asyncio.create_task(self.periodic_jugdgement_post())
+        self.summary_task = asyncio.create_task(self.periodic_summary_post())
 
     async def event_oauth_authorized(self, payload: twitchio.authentication.UserTokenPayload) -> None:
         await self.add_token(payload.access_token, payload.refresh_token)
@@ -142,6 +144,40 @@ class MinimalTwitchBot(commands.AutoBot):
                 
             except Exception as e:
                 LOGGER.error(f"Failed to post to cloud function: {e}")
+
+    async def periodic_summary_post(self):
+        """Post messages to cloud function every 5 seconds for summary"""
+        while True:
+            await asyncio.sleep(5)
+            
+
+            if not self.p1_messages and not self.p2_messages:
+                continue
+
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(
+                        JUDGE_CLOUD_FUNCTION_URL,
+                        json={"messages": list(self.p1_messages.values())},
+                        headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "role": "summary"}
+                    ) as response:
+                        response_text = await response.text()
+                        LOGGER.info(f"Summary response ({response.status}) P1: {response_text}")           
+            except Exception as e:
+                LOGGER.error(f"Failed to post summary to cloud function: {e}")
+
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(
+                        JUDGE_CLOUD_FUNCTION_URL,
+                        json={"messages": list(self.p2_messages.values())},
+                        headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "role": "summary"}
+                    ) as response:
+                        response_text = await response.text()
+                        LOGGER.info(f"Summary response ({response.status}) P2: {response_text}")           
+            except Exception as e:
+                LOGGER.error(f"Failed to post summary to cloud function: {e}")
+
 
 class MessageHandler(commands.Component):
     def __init__(self, bot: MinimalTwitchBot):
