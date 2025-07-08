@@ -8,7 +8,6 @@ BOT_ID = os.getenv('TWITCH_BOT_ID', 'your_bot_id_here')
 OWNER_ID = os.getenv('TWITCH_OWNER_ID', 'your_owner_id_here')
 
 BOT_NAME = os.getenv('TWITCH_BOT_NAME', 'your_bot_name')
-CHANNEL = os.getenv('TWITCH_CHANNEL', 'your_channel_name')
 
 # Cloud Function Configuration
 CLOUD_FUNCTION_URL = os.getenv('CLOUD_FUNCTION_URL', 'your_cloud_function_url_here')

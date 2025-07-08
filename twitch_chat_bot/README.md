@@ -15,7 +15,7 @@ pip install -r requirements.txt
 ### 2. Create Twitch Application
 1. Go to [Twitch Developer Console](https://dev.twitch.tv/console)
 2. Create new application
-3. Set callback URL: `http://localhost:3000/auth/callback`
+3. Set callback URL: `http://localhost:4343/oauth/callback`
 4. Note your `CLIENT_ID` and `CLIENT_SECRET`
 
 ### 3. Configure Environment Variables
@@ -39,29 +39,4 @@ The bot uses AutoBot for automatic OAuth handling:
 ### 5. Run Bot
 ```bash
 python bot.py
-```
-
-**Note**: OAuth tokens are automatically managed - no manual token generation needed!
-
-## Usage
-
-- Users type `P1: message` to store P1 message
-- Users type `P2: message` to store P2 message
-- Bot posts all stored messages to cloud function every 60 seconds
-- Messages are cleared after successful POST
-
-## Cloud Function Payload
-
-The bot sends JSON payload:
-```json
-{
-  "timestamp": "2024-01-01T12:00:00",
-  "p1_messages": {
-    "username1": "message content",
-    "username2": "another message"
-  },
-  "p2_messages": {
-    "username1": "p2 message content"
-  }
-}
 ```
