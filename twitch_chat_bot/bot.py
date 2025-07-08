@@ -162,7 +162,8 @@ class MinimalTwitchBot(commands.AutoBot):
                         headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "role": "summary"}
                     ) as response:
                         response_text = await response.text()
-                        LOGGER.info(f"Summary response ({response.status}) P1: {response_text}")           
+                        LOGGER.info(f"Summary response ({response.status}) P1: {response_text}")
+
             except Exception as e:
                 LOGGER.error(f"Failed to post summary to cloud function: {e}")
 
