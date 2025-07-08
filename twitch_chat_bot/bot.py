@@ -108,7 +108,7 @@ class MinimalTwitchBot(commands.AutoBot):
                     async with session.post(
                         JUDGE_CLOUD_FUNCTION_URL,
                         json=payload,
-                        headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}"}
+                        headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "role": "judge"}
                     ) as response:
                         response_text = await response.text()
                         LOGGER.info(f"Cloud function response ({response.status}): {response_text}")
