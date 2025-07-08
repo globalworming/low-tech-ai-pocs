@@ -1,6 +1,7 @@
 descriptions/
 .env
 bin/
+pyvenv.cfg
 
 # Byte-compiled / optimized / dll files
 __pycache__/
