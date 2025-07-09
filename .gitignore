@@ -14,7 +14,7 @@ __pycache__/
 env/
 venv/
 lib/
-lib64/
+lib64
 build/
 develop-eggs/
 dist/
