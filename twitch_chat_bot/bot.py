@@ -95,7 +95,7 @@ class MinimalTwitchBot(commands.AutoBot):
 
 
     async def periodic_jugdgement_post(self):
-        """Post messages to cloud function every 60 seconds"""
+        """Post messages to cloud function"""
         while True:
             # Start new round
             try:
@@ -116,11 +116,7 @@ class MinimalTwitchBot(commands.AutoBot):
                 LOGGER.info("No messages to post")
                 continue
                 
-            # Prepare payload
             payload = {
-                #"timestamp": datetime.now().isoformat(),
-       #         "p1_messages": list(self.p1_messages.values()),
-        #        "p2_messages": list(self.p2_messages.values()),
                 "p1_messages": list(self.p1_messages.values()),
                 "p2_messages": list(self.p2_messages.values()),
             }
@@ -136,7 +132,7 @@ class MinimalTwitchBot(commands.AutoBot):
                     ) as response:
                         response_text = await response.text()
                         LOGGER.info(f"Cloud function response ({response.status}): {response_text}")
-                        
+
                 if response_text.lower().endswith("p1"):
                     game_state.p2.take_damage(1)
                 elif response_text.lower().endswith("p2"):
@@ -148,8 +144,8 @@ class MinimalTwitchBot(commands.AutoBot):
                     # FIXME try request again before throw exception
                     raise Exception(f"Invalid response from cloud function: {response_text}")
 
-                # Call show endpoint with response summary
 
+                # Call show endpoint with response summary
                 summary_text = response_text.replace("P1", game_state.p1.name)
                 summary_text = summary_text.replace("P2", game_state.p2.name)
                 if not summary_text.lower().endswith("draw"):
@@ -166,6 +162,9 @@ class MinimalTwitchBot(commands.AutoBot):
                                 LOGGER.warning(f"Show endpoint call failed: {show_response.status}")
                 except Exception as e:
                     LOGGER.error(f"Failed to call show endpoint: {e}")
+
+                # wait for folks to read the text
+                await asyncio.sleep(min(60, len(summary_text) / 10))
 
                 # Update server state via REST call
                 try:
@@ -187,7 +186,23 @@ class MinimalTwitchBot(commands.AutoBot):
                 except Exception as e:
                     LOGGER.error(f"Failed to update server state: {e}")
                 
+                # hide summary modal via REST call
+                try:
+                    hide_url = f"{SERVER_URL}/hide"
+                    async with aiohttp.ClientSession() as hide_session:
+                        async with hide_session.get(hide_url) as hide_response:
+                            if hide_response.status == 200:
+                                LOGGER.info("Successfully hidden summary modal")
+                            else:
+                                LOGGER.warning(f"Summary modal hide failed: {hide_response.status}")
+                except Exception as e:
+                    LOGGER.error(f"Failed to hide summary modal: {e}")
+
+                # wait a bit before starting next one
+                await asyncio.sleep(2)
+
                 if game_state.check_game_over():                    
+                    await asyncio.sleep(15)
                     # reset state after game over
                     game_state.reset_game()
                     LOGGER.info("reset game_state")
