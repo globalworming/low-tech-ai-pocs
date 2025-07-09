@@ -213,66 +213,47 @@ class MinimalTwitchBot(commands.AutoBot):
             except Exception as e:
                 LOGGER.error(f"Failed to post to cloud function: {e}")
 
+    async def _process_player_summary(self, player: str, messages: dict):
+        """Process summary for a single player"""
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    JUDGE_CLOUD_FUNCTION_URL,
+                    json={"messages": list(messages.values())},
+                    headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "x-role": "summary"}
+                ) as response:
+                    response_text = await response.text()
+                    LOGGER.info(f"Summary response ({response.status}) {player}: {response_text}")
+                    
+                    # Update player thinking
+                    try:
+                        think_url = f"{SERVER_URL}/think"
+                        think_params = {"player": player, "thoughts": response_text}
+                        async with aiohttp.ClientSession() as think_session:
+                            async with think_session.get(think_url, params=think_params) as think_response:
+                                if think_response.status == 200:
+                                    LOGGER.info(f"Successfully updated {player} thinking")
+                                else:
+                                    LOGGER.warning(f"{player} think update failed: {think_response.status}")
+                    except Exception as e:
+                        LOGGER.error(f"Failed to update {player} thinking: {e}")
+
+        except Exception as e:
+            LOGGER.error(f"Failed to post summary to cloud function: {e}")
+
     async def periodic_summary_post(self):
-        """Post messages to cloud function every 5 seconds for summary"""
+        """Post messages to cloud function"""
         while True:
             await asyncio.sleep(15)
             
-
             if not self.p1_messages and not self.p2_messages:
                 continue
 
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(
-                        JUDGE_CLOUD_FUNCTION_URL,
-                        json={"messages": list(self.p1_messages.values())},
-                        headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "x-role": "summary"}
-                    ) as response:
-                        response_text = await response.text()
-                        LOGGER.info(f"Summary response ({response.status}) P1: {response_text}")
-                        
-                        # Update P1 thinking
-                        try:
-                            think_url = f"{SERVER_URL}/think"
-                            think_params = {"player": "P1", "thoughts": response_text}
-                            async with aiohttp.ClientSession() as think_session:
-                                async with think_session.get(think_url, params=think_params) as think_response:
-                                    if think_response.status == 200:
-                                        LOGGER.info("Successfully updated P1 thinking")
-                                    else:
-                                        LOGGER.warning(f"P1 think update failed: {think_response.status}")
-                        except Exception as e:
-                            LOGGER.error(f"Failed to update P1 thinking: {e}")
-
-            except Exception as e:
-                LOGGER.error(f"Failed to post summary to cloud function: {e}")
-
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(
-                        JUDGE_CLOUD_FUNCTION_URL,
-                        json={"messages": list(self.p2_messages.values())},
-                        headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "x-role": "summary"}
-                    ) as response:
-                        response_text = await response.text()
-                        LOGGER.info(f"Summary response ({response.status}) P2: {response_text}")
-                        
-                        # Update P2 thinking
-                        try:
-                            think_url = f"{SERVER_URL}/think"
-                            think_params = {"player": "P2", "thoughts": response_text}
-                            async with aiohttp.ClientSession() as think_session:
-                                async with think_session.get(think_url, params=think_params) as think_response:
-                                    if think_response.status == 200:
-                                        LOGGER.info("Successfully updated P2 thinking")
-                                    else:
-                                        LOGGER.warning(f"P2 think update failed: {think_response.status}")
-                        except Exception as e:
-                            LOGGER.error(f"Failed to update P2 thinking: {e}")
-                        
-            except Exception as e:
-                LOGGER.error(f"Failed to post summary to cloud function: {e}")
+            # Process both players
+            if self.p1_messages:
+                await self._process_player_summary("P1", self.p1_messages)
+            if self.p2_messages:
+                await self._process_player_summary("P2", self.p2_messages)
 
 
 class MessageHandler(commands.Component):
