@@ -16,10 +16,13 @@ to keep track of a minimalistic roadmap in the now/next/later format. usually th
 
 ### next
 
-
 ### later
-
+- [ ] llm text to text, local ai ring announcer
+- [ ] local text to speech
 
 ### done
 - [x] describe image to json (2025-07-03)
 - [x] capture image from webcam and save it to a file every 5 seconds (2025-07-03)
+- [x] try different image transformations, edge detection, cascade, yolo, remove background
+- [x] let local llm describe image 
+  - quality is meh, and 5 tokens/s is slow
