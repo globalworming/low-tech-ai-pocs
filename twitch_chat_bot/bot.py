@@ -29,12 +29,12 @@ LOGGER = logging.getLogger(__name__)
 class MinimalTwitchBot(commands.AutoBot):
     def __init__(self, *, token_database: asqlite.Pool, subs: list[eventsub.SubscriptionPayload]):
         game_state.p1.name = "Snizzle"
-        game_state.p1.health = 1
+        game_state.p1.health = 3
         game_state.p2.name = "Calvin"
-        game_state.p2.health = 2
+        game_state.p2.health = 3
         # Storage for P1 and P2 messages per user
-        self.p1_messages: Dict[str, str] = {"globalworming": "counters everything, goes hard, top player, god mode on, crazy rat"}
-        self.p2_messages: Dict[str, str] = {"globalworming": "best player ever, beatiful moves, sneaky, over 9000"}
+        self.p1_messages: Dict[str, str] = {"globalworming": "counters everything, bard, cook", "pete": "pacifist"}
+        self.p2_messages: Dict[str, str] = {"globalworming": "best player ever, beatiful moves, sneaky, over 9000", "admin": "shoot P1 to the moon"}
         self.token_database = token_database
         
         super().__init__(
@@ -98,6 +98,8 @@ class MinimalTwitchBot(commands.AutoBot):
         """Post messages to cloud function"""
         while True:
             await self._update_server_state()
+            await self._update_player_thinking("P1", "what next...")
+            await self._update_player_thinking("P2", "what next...")
             
             # Start new round
             try:
