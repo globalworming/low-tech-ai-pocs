@@ -22,4 +22,4 @@ The bot sends JSON payload:
   }
 }
 ```
-tokens.db
+tokens.dblib64/
