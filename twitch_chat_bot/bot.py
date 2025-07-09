@@ -222,22 +222,25 @@ class MinimalTwitchBot(commands.AutoBot):
                     json={"messages": list(messages.values())},
                     headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "x-role": "summary"}
                 ) as response:
-                    response_text = await response.text()
-                    LOGGER.info(f"Summary response ({response.status}) {player}: {response_text}")
-                    
-                    # Update player thinking
-                    try:
-                        think_url = f"{SERVER_URL}/think"
-                        think_params = {"player": player, "thoughts": response_text}
-                        async with aiohttp.ClientSession() as think_session:
-                            async with think_session.get(think_url, params=think_params) as think_response:
-                                if think_response.status == 200:
-                                    LOGGER.info(f"Successfully updated {player} thinking")
-                                else:
-                                    LOGGER.warning(f"{player} think update failed: {think_response.status}")
-                    except Exception as e:
-                        LOGGER.error(f"Failed to update {player} thinking: {e}")
-
+                    if response.status == 200:
+                        LOGGER.info(f"got {player} summary")
+                        response_text = await response.text()
+                        LOGGER.info(f"Summary response ({response.status}) {player}: {response_text}")             
+                        # Update player thinking
+                        try:
+                            think_url = f"{SERVER_URL}/think"
+                            think_params = {"player": player, "thoughts": response_text}
+                            async with aiohttp.ClientSession() as think_session:
+                                async with think_session.get(think_url, params=think_params) as think_response:
+                                    if think_response.status == 200:
+                                        LOGGER.info(f"Successfully updated {player} thinking")
+                                    else:
+                                        LOGGER.warning(f"{player} think update failed: {think_response.status}")
+                        except Exception as e:
+                            LOGGER.error(f"Failed to update {player} thinking: {e}")
+                    else:
+                        LOGGER.warning(f"get {player} summary failed: {response.status}")
+                
         except Exception as e:
             LOGGER.error(f"Failed to post summary to cloud function: {e}")
 
