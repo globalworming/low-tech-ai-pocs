@@ -88,13 +88,12 @@ async def start_round(duration: int = 50):
     return {"status": "success", "message": "Round started"}
 
 @app.get("/think")
-async def think(p1: str = "what next", p2: str = "what next"):
+async def think(player: str= "P1",thoughts: str = "what next"):
     message = {
         "event_type": "think",
         "data": {
             "timestamp": asyncio.get_event_loop().time(),
-            "p1": p1,
-            "p2": p2
+            player: thoughts,
         }
     }
     

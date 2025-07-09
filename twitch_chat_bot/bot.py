@@ -33,8 +33,8 @@ class MinimalTwitchBot(commands.AutoBot):
         game_state.p2.name = "Calvin"
         game_state.p2.health = 2
         # Storage for P1 and P2 messages per user
-        self.p1_messages: Dict[str, str] = {"globalworming": "counters everything, goes hard"}
-        self.p2_messages: Dict[str, str] = {"globalworming": "best player ever, beatiful moves"}
+        self.p1_messages: Dict[str, str] = {"globalworming": "counters everything, goes hard, top player, god mode on, crazy rat"}
+        self.p2_messages: Dict[str, str] = {"globalworming": "best player ever, beatiful moves, sneaky, over 9000"}
         self.token_database = token_database
         
         super().__init__(
@@ -97,6 +97,17 @@ class MinimalTwitchBot(commands.AutoBot):
     async def periodic_jugdgement_post(self):
         """Post messages to cloud function every 60 seconds"""
         while True:
+            # Start new round
+            try:
+                async with aiohttp.ClientSession() as session:
+                    start_url = f"{SERVER_URL}/start_round?duration={POST_INTERVAL_SECONDS}"
+                    async with session.get(start_url) as response:
+                        if response.status == 200:
+                            LOGGER.info("Successfully started new round")
+                        else:
+                            LOGGER.error(f"Failed to start round: {response.status}")
+            except Exception as e:
+                LOGGER.error(f"Error starting round: {e}")
             for remaining in range(POST_INTERVAL_SECONDS, 0, -1):
                 LOGGER.info(f"Next judge in {remaining}s...")
                 await asyncio.sleep(1)
@@ -133,6 +144,28 @@ class MinimalTwitchBot(commands.AutoBot):
                 elif response_text.lower().endswith("draw"):
                     game_state.p1.take_damage(1)
                     game_state.p2.take_damage(1)
+                else:
+                    # FIXME try request again before throw exception
+                    raise Exception(f"Invalid response from cloud function: {response_text}")
+
+                # Call show endpoint with response summary
+
+                summary_text = response_text.replace("P1", game_state.p1.name)
+                summary_text = summary_text.replace("P2", game_state.p2.name)
+                if not summary_text.lower().endswith("draw"):
+                    summary_text += " wins!!!"
+
+                try:
+                    show_url = f"{SERVER_URL}/show"
+                    show_params = {"summary": summary_text}
+                    async with aiohttp.ClientSession() as show_session:
+                        async with show_session.get(show_url, params=show_params) as show_response:
+                            if show_response.status == 200:
+                                LOGGER.info("Successfully called show endpoint")
+                            else:
+                                LOGGER.warning(f"Show endpoint call failed: {show_response.status}")
+                except Exception as e:
+                    LOGGER.error(f"Failed to call show endpoint: {e}")
 
                 # Update server state via REST call
                 try:
@@ -168,7 +201,7 @@ class MinimalTwitchBot(commands.AutoBot):
     async def periodic_summary_post(self):
         """Post messages to cloud function every 5 seconds for summary"""
         while True:
-            await asyncio.sleep(5)
+            await asyncio.sleep(15)
             
 
             if not self.p1_messages and not self.p2_messages:
@@ -183,6 +216,19 @@ class MinimalTwitchBot(commands.AutoBot):
                     ) as response:
                         response_text = await response.text()
                         LOGGER.info(f"Summary response ({response.status}) P1: {response_text}")
+                        
+                        # Update P1 thinking
+                        try:
+                            think_url = f"{SERVER_URL}/think"
+                            think_params = {"player": "P1", "thoughts": response_text}
+                            async with aiohttp.ClientSession() as think_session:
+                                async with think_session.get(think_url, params=think_params) as think_response:
+                                    if think_response.status == 200:
+                                        LOGGER.info("Successfully updated P1 thinking")
+                                    else:
+                                        LOGGER.warning(f"P1 think update failed: {think_response.status}")
+                        except Exception as e:
+                            LOGGER.error(f"Failed to update P1 thinking: {e}")
 
             except Exception as e:
                 LOGGER.error(f"Failed to post summary to cloud function: {e}")
@@ -195,7 +241,21 @@ class MinimalTwitchBot(commands.AutoBot):
                         headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "x-role": "summary"}
                     ) as response:
                         response_text = await response.text()
-                        LOGGER.info(f"Summary response ({response.status}) P2: {response_text}")           
+                        LOGGER.info(f"Summary response ({response.status}) P2: {response_text}")
+                        
+                        # Update P2 thinking
+                        try:
+                            think_url = f"{SERVER_URL}/think"
+                            think_params = {"player": "P2", "thoughts": response_text}
+                            async with aiohttp.ClientSession() as think_session:
+                                async with think_session.get(think_url, params=think_params) as think_response:
+                                    if think_response.status == 200:
+                                        LOGGER.info("Successfully updated P2 thinking")
+                                    else:
+                                        LOGGER.warning(f"P2 think update failed: {think_response.status}")
+                        except Exception as e:
+                            LOGGER.error(f"Failed to update P2 thinking: {e}")
+                        
             except Exception as e:
                 LOGGER.error(f"Failed to post summary to cloud function: {e}")
 
