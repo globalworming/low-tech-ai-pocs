@@ -97,6 +97,8 @@ class MinimalTwitchBot(commands.AutoBot):
     async def periodic_jugdgement_post(self):
         """Post messages to cloud function"""
         while True:
+            await self._update_server_state()
+            
             # Start new round
             try:
                 async with aiohttp.ClientSession() as session:
@@ -163,28 +165,12 @@ class MinimalTwitchBot(commands.AutoBot):
                 except Exception as e:
                     LOGGER.error(f"Failed to call show endpoint: {e}")
 
+                # Update server state via REST call
+                await self._update_server_state()
+                
                 # wait for folks to read the text
                 await asyncio.sleep(min(60, len(summary_text) / 10))
 
-                # Update server state via REST call
-                try:
-                    state_url = f"{SERVER_URL}/state"
-                    params = {
-                        "p1Name": game_state.p1.name,
-                        "p2Name": game_state.p2.name,
-                        "p1Health": game_state.p1.health,
-                        "p2Health": game_state.p2.health,
-                        "p1Wins": game_state.p1.wins,
-                        "p2Wins": game_state.p2.wins
-                    }
-                    async with aiohttp.ClientSession() as state_session:
-                        async with state_session.get(state_url, params=params) as state_response:
-                            if state_response.status == 200:
-                                LOGGER.info("Successfully updated server state")
-                            else:
-                                LOGGER.warning(f"Server state update failed: {state_response.status}")
-                except Exception as e:
-                    LOGGER.error(f"Failed to update server state: {e}")
                 
                 # hide summary modal via REST call
                 try:
@@ -209,6 +195,9 @@ class MinimalTwitchBot(commands.AutoBot):
                     self.p1_messages.clear()
                     self.p2_messages.clear()
                     LOGGER.info("Messages cleared")
+                    await self._update_player_thinking("P1", "what next...")
+                    await self._update_player_thinking("P2", "what next...")
+                    
                 
             except Exception as e:
                 LOGGER.error(f"Failed to post to cloud function: {e}")
@@ -226,18 +215,7 @@ class MinimalTwitchBot(commands.AutoBot):
                         LOGGER.info(f"got {player} summary")
                         response_text = await response.text()
                         LOGGER.info(f"Summary response ({response.status}) {player}: {response_text}")             
-                        # Update player thinking
-                        try:
-                            think_url = f"{SERVER_URL}/think"
-                            think_params = {"player": player, "thoughts": response_text}
-                            async with aiohttp.ClientSession() as think_session:
-                                async with think_session.get(think_url, params=think_params) as think_response:
-                                    if think_response.status == 200:
-                                        LOGGER.info(f"Successfully updated {player} thinking")
-                                    else:
-                                        LOGGER.warning(f"{player} think update failed: {think_response.status}")
-                        except Exception as e:
-                            LOGGER.error(f"Failed to update {player} thinking: {e}")
+                        await self._update_player_thinking(player, response_text)
                     else:
                         LOGGER.warning(f"get {player} summary failed: {response.status}")
                 
@@ -257,6 +235,41 @@ class MinimalTwitchBot(commands.AutoBot):
                 await self._process_player_summary("P1", self.p1_messages)
             if self.p2_messages:
                 await self._process_player_summary("P2", self.p2_messages)
+
+    async def _update_server_state(self):
+        """Update server state via REST call"""
+        try:
+            state_url = f"{SERVER_URL}/state"
+            params = {
+                "p1Name": game_state.p1.name,
+                "p2Name": game_state.p2.name,
+                "p1Health": game_state.p1.health,
+                "p2Health": game_state.p2.health,
+                "p1Wins": game_state.p1.wins,
+                "p2Wins": game_state.p2.wins
+            }
+            async with aiohttp.ClientSession() as state_session:
+                async with state_session.get(state_url, params=params) as state_response:
+                    if state_response.status == 200:
+                        LOGGER.info("Successfully updated server state")
+                    else:
+                        LOGGER.warning(f"Server state update failed: {state_response.status}")
+        except Exception as e:
+            LOGGER.error(f"Failed to update server state: {e}")
+
+    async def _update_player_thinking(self, player: str, thoughts: str):
+        """Update player thinking via REST call"""
+        try:
+            think_url = f"{SERVER_URL}/think"
+            think_params = {"player": player, "thoughts": thoughts}
+            async with aiohttp.ClientSession() as think_session:
+                async with think_session.get(think_url, params=think_params) as think_response:
+                    if think_response.status == 200:
+                        LOGGER.info(f"Successfully updated {player} thinking")
+                    else:
+                        LOGGER.warning(f"{player} think update failed: {think_response.status}")
+        except Exception as e:
+            LOGGER.error(f"Failed to update {player} thinking: {e}")
 
 
 class MessageHandler(commands.Component):
