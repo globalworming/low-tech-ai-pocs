@@ -41,6 +41,7 @@ async def stream_events(request: Request):
     """
     SSE endpoint that streams events to connected clients.
     Keeps connection alive and sends messages from the queue.
+    Example: localhost:8000/events
     """
     async def event_generator():
         while True:
@@ -74,6 +75,7 @@ async def stream_events(request: Request):
 async def start_round(duration: int = 50):
     """
     start the on screen countdown
+    localhost:8000/start_round?duration=30
     """
     message = {
         "event_type": "start_round",
@@ -89,6 +91,12 @@ async def start_round(duration: int = 50):
 
 @app.get("/think")
 async def think(player: str= "P1",thoughts: str = "what next"):
+    """
+    Update player thinking status
+    Examples:
+    localhost:8000/think?player=P1&thoughts=Planning%20my%20next%20move
+    localhost:8000/think?player=P2&thoughts=Analyzing%20opponent%20strategy
+    """
     message = {
         "event_type": "think",
         "data": {
@@ -103,6 +111,11 @@ async def think(player: str= "P1",thoughts: str = "what next"):
 
 @app.get("/show")
 async def show(summary: str = "FIXME"):
+    """
+    Show summary or result on screen
+    Examples:
+    localhost:8000/show?summary=Round%201%20Complete%20-%20Fighter1%20Wins!
+    """
     message = {
         "event_type": "show",
         "data": {
@@ -117,6 +130,10 @@ async def show(summary: str = "FIXME"):
 
 @app.get("/hide")
 async def hide():
+    """
+    Hide result or summary from screen
+    Example: localhost:8000/hide
+    """
     message = {
         "event_type": "hide",
         "data": {
@@ -132,7 +149,8 @@ async def hide():
 async def state(p1Name: str = "P1", p2Name: str = "P2", p1Health: int = 3, p2Health: int = 3, p1Wins: int = 0, p2Wins: int = 0):
     """
     Update game state information
-    Example: /state?p1Name=Fighter1&p2Name=Fighter2&p1Health=2&p2Health=3&p1Wins=1&p2Wins=0
+    localhost:8000/state?p1Name=Fighter1&p2Name=Fighter2&p1Health=2&p2Health=3&p1Wins=1&p2Wins=0
+    localhost:8000/state?p1Name=Zangief&p2Name=Ryu&p1Health=1&p2Health=2&p1Wins=2&p2Wins=1
     """
     message = {
         "event_type": "state",
