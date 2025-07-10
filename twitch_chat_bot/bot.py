@@ -121,9 +121,17 @@ class MinimalTwitchBot(commands.AutoBot):
                 continue
                 
             payload = {
+                "players": { 
+                    "P1":{
+                        "name": game_state.p1.name,
+                    }, 
+                    "P2":{
+                        "name": game_state.p2.name,
+                    }
+                },
                 "p1_messages": list(self.p1_messages.values()),
                 "p2_messages": list(self.p2_messages.values()),
-            }
+            }}
             
             LOGGER.info("payload: %r", payload)
             try:
