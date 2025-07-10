@@ -9,7 +9,7 @@ Stream Twitch chat with minimal functionality:
 
 ### 1. Install Dependencies
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ### 2. Create Twitch Application
