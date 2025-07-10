@@ -131,7 +131,7 @@ class MinimalTwitchBot(commands.AutoBot):
                 },
                 "p1_messages": list(self.p1_messages.values()),
                 "p2_messages": list(self.p2_messages.values()),
-            }}
+            }
             
             LOGGER.info("payload: %r", payload)
             try:
