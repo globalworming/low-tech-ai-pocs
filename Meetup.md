@@ -6,7 +6,7 @@ Has networking, ai sec speaker, maschine learning and llm based games
 
 Ask mina from ee
 
-Gather names of folks with landbot.io, optional link to minigames
+Gather names of folks with landbot.io, optional link to minigames, if you would prove that you are not AI, what you doing? 
 
 Minigame: bring your favourite prompt. A djinn will subvert it.
 
