@@ -33,8 +33,8 @@ class MinimalTwitchBot(commands.AutoBot):
         game_state.p2.name = "Calvin"
         game_state.p2.health = 3
         # Storage for P1 and P2 messages per user
-        self.p1_messages: Dict[str, str] = {"globalworming": "counters everything, bard, cook", "pete": "pacifist"}
-        self.p2_messages: Dict[str, str] = {"globalworming": "best player ever, beatiful moves, sneaky, over 9000", "admin": "shoot P1 to the moon"}
+        self.p1_messages: Dict[str, str] = {"globalworming": "counters everything, bard, cook"}
+        self.p2_messages: Dict[str, str] = {"globalworming": "best player ever, beatiful moves, sneaky, over 9000"}
         self.token_database = token_database
         
         super().__init__(
@@ -171,7 +171,7 @@ class MinimalTwitchBot(commands.AutoBot):
                 await self._update_server_state()
                 
                 # wait for folks to read the text
-                await asyncio.sleep(min(60, len(summary_text) / 10))
+                await asyncio.sleep(min(60, len(summary_text) / 8))
 
                 
                 # hide summary modal via REST call
