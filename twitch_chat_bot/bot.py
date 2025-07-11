@@ -28,13 +28,13 @@ LOGGER = logging.getLogger(__name__)
 
 class MinimalTwitchBot(commands.AutoBot):
     def __init__(self, *, token_database: asqlite.Pool, subs: list[eventsub.SubscriptionPayload]):
-        game_state.p1.name = "Snizzle"
+        game_state.p1.name = "Einstein"
         game_state.p1.health = 3
-        game_state.p2.name = "Calvin"
+        game_state.p2.name = "Tesla"
         game_state.p2.health = 3
         # Storage for P1 and P2 messages per user
-        self.p1_messages: Dict[str, str] = {"globalworming": "counters everything, bard, cook"}
-        self.p2_messages: Dict[str, str] = {"globalworming": "best player ever, beatiful moves, sneaky, over 9000"}
+        self.p1_messages: Dict[str, str] = {"globalworming": "lightspeed jetpack, can cross the the event horizon twice"}
+        self.p2_messages: Dict[str, str] = {"globalworming": "targeted rockets travelling through the ether"}
         self.token_database = token_database
         
         super().__init__(
@@ -235,7 +235,8 @@ class MinimalTwitchBot(commands.AutoBot):
     async def periodic_summary_post(self):
         """Post messages to cloud function"""
         while True:
-            await asyncio.sleep(15)
+            
+            await asyncio.sleep(8)
             
             if not self.p1_messages and not self.p2_messages:
                 continue
@@ -243,6 +244,9 @@ class MinimalTwitchBot(commands.AutoBot):
             # Process both players
             if self.p1_messages:
                 await self._process_player_summary("P1", self.p1_messages)
+            
+            await asyncio.sleep(9)
+             
             if self.p2_messages:
                 await self._process_player_summary("P2", self.p2_messages)
 
