@@ -184,12 +184,16 @@ class MinimalTwitchBot(commands.AutoBot):
                 
                 # wait for folks to read the text
 
-                try:    
-                    await self._tts(summary_text)
-                except Exception as e:
-                    LOGGER.error(f"Failed to call TTS endpoint: {e}")
+                if (SPEECH_ENABLED):
+                    try:    
+                        await self._tts(summary_text)
+                    except Exception as e:
+                        LOGGER.error(f"Failed to call TTS endpoint: {e}")
+                        await asyncio.sleep(min(60, len(summary_text) / 8))
+                else:
                     await asyncio.sleep(min(60, len(summary_text) / 8))
 
+                await asyncio.sleep(2)
                 
                 # hide summary modal via REST call
                 try:
