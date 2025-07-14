@@ -10,7 +10,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 @dataclass
-class Figther:
+class Fighter:
     """Represents a worm in the game"""
     name: str = "FighterName"
     health: int = 3
@@ -52,8 +52,8 @@ class Figther:
 @dataclass
 class GameState:
     """Manages the overall game state"""
-    p1: Figther = field(default_factory=Figther)
-    p2: Figther = field(default_factory=Figther)
+    p1: Fighter = field(default_factory=Fighter)
+    p2: Fighter = field(default_factory=Fighter)
     
     def set_players(self, p1_name: str, p2_name: str) -> None:
         """Set player names and initialize game"""
@@ -68,7 +68,7 @@ class GameState:
         self.p2.reset_health()
         LOGGER.info(f"Game reset")
     
-    def end_game(self, winner: Optional[Figther] = None) -> None:
+    def end_game(self, winner: Optional[Fighter] = None) -> None:
         """End the current game"""
         if winner:
             winner.add_win()
@@ -91,7 +91,7 @@ class GameState:
             self.end_game(self.p1)
             return True
     
-    def get_player_by_name(self, name: str) -> Optional[Figther]:
+    def get_player_by_name(self, name: str) -> Optional[Fighter]:
         """Get player by name"""
         if self.p1.name.lower() == name.lower():
             return self.p1
