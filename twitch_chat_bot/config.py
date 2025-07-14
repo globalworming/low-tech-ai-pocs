@@ -20,4 +20,4 @@ SERVER_URL = os.getenv('SERVER_URL', 'http://localhost:8000')
 MESSAGE_MAX_LENGTH = int(os.getenv('MESSAGE_MAX_LENGTH', '500'))
 POST_INTERVAL_SECONDS = int(os.getenv('POST_INTERVAL_SECONDS', '60'))
 
-SPEECH_ENABLED=os.getenv('SPEECH_ENABLED', 'true')
+SPEECH_ENABLED=os.getenv('SPEECH_ENABLED', 'false')
