@@ -166,8 +166,7 @@ class MinimalTwitchBot(commands.AutoBot):
                 if not summary_text.lower().endswith("draw"):
                     summary_text += " wins!!!"
 
-                await self._tts(summary_text)
-
+               
                 try:
                     show_url = f"{SERVER_URL}/show"
                     show_params = {"summary": summary_text}
@@ -184,7 +183,12 @@ class MinimalTwitchBot(commands.AutoBot):
                 await self._update_server_state()
                 
                 # wait for folks to read the text
-                await asyncio.sleep(min(60, len(summary_text) / 8))
+
+                try:    
+                    await self._tts(summary_text)
+                except Exception as e:
+                    LOGGER.error(f"Failed to call TTS endpoint: {e}")
+                    await asyncio.sleep(min(60, len(summary_text) / 8))
 
                 
                 # hide summary modal via REST call
@@ -232,7 +236,7 @@ class MinimalTwitchBot(commands.AutoBot):
                         LOGGER.info(f"Summary response ({response.status}) {player}: {response_text}")             
                         await self._update_player_thinking(player, response_text)
                         if self.remaining > 10:
-                            text = f"... {player.name} considers: {response_text}"
+                            text = f"{player.name} considers: {response_text}"
                             await self._tts(text)
                     else:
                         LOGGER.warning(f"get {player} summary failed: {response.status}")
