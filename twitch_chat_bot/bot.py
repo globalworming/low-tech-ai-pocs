@@ -36,6 +36,7 @@ class MinimalTwitchBot(commands.AutoBot):
         self.p1_messages: Dict[str, str] = {"globalworming": "lightspeed jetpack, can cross the the event horizon twice"}
         self.p2_messages: Dict[str, str] = {"globalworming": "targeted rockets travelling through the ether"}
         self.token_database = token_database
+        self.remaining = 0  # Countdown timer for next judgment
         
         super().__init__(
             client_id=CLIENT_ID,
@@ -113,8 +114,10 @@ class MinimalTwitchBot(commands.AutoBot):
             except Exception as e:
                 LOGGER.error(f"Error starting round: {e}")
             for remaining in range(POST_INTERVAL_SECONDS, 0, -1):
+                self.remaining = remaining
                 LOGGER.info(f"Next judge in {remaining}s...")
                 await asyncio.sleep(1)
+            self.remaining = 0
             
             if not self.p1_messages and not self.p2_messages:
                 LOGGER.info("No messages to post")
