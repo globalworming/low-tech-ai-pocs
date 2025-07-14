@@ -28,10 +28,10 @@ LOGGER = logging.getLogger(__name__)
 
 class MinimalTwitchBot(commands.AutoBot):
     def __init__(self, *, token_database: asqlite.Pool, subs: list[eventsub.SubscriptionPayload]):
-        game_state.p1.name = "Einstein"
-        game_state.p1.health = 3
-        game_state.p2.name = "Tesla"
-        game_state.p2.health = 3
+        game_state.p1.name = "Olivia"
+        game_state.p1.health = 1
+        game_state.p2.name = "Athena"
+        game_state.p2.health = 1
         # Storage for P1 and P2 messages per user
         self.p1_messages: Dict[str, str] = {"globalworming": "lightspeed jetpack, can cross the the event horizon twice"}
         self.p2_messages: Dict[str, str] = {"globalworming": "targeted rockets travelling through the ether"}

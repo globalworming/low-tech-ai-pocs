@@ -76,22 +76,20 @@ class GameState:
         else:
             LOGGER.info("Game ended - No winner")
     
-    def check_game_over(self) -> Optional[Figther]:
+    def check_game_over(self) -> bool:
         """Check if game is over and return winner if any"""
         if not self.p1.is_alive() and not self.p2.is_alive():
             # Draw
             self.end_game()
-            return None
+            return True
         elif not self.p1.is_alive():
             # P2 wins
             self.end_game(self.p2)
-            return self.p2
+            return True
         elif not self.p2.is_alive():
             # P1 wins
             self.end_game(self.p1)
-            return self.p1
-        
-        return None
+            return True
     
     def get_player_by_name(self, name: str) -> Optional[Figther]:
         """Get player by name"""
