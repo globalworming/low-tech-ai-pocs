@@ -17,7 +17,7 @@ from config import (
     CLIENT_ID, CLIENT_SECRET, BOT_ID, OWNER_ID, JUDGE_CLOUD_FUNCTION_URL, 
     MESSAGE_MAX_LENGTH, POST_INTERVAL_SECONDS, JUDGE_CLOUD_FUNCTION_TOKEN, SERVER_URL
 )
-from game_state import game_state
+from game_state import Figther, game_state
 
 if TYPE_CHECKING:
     import sqlite3
@@ -25,6 +25,9 @@ if TYPE_CHECKING:
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
+
+# Global variables
+judge_timer_remaining = POST_INTERVAL_SECONDS
 
 class MinimalTwitchBot(commands.AutoBot):
     def __init__(self, *, token_database: asqlite.Pool, subs: list[eventsub.SubscriptionPayload]):
@@ -112,8 +115,8 @@ class MinimalTwitchBot(commands.AutoBot):
                             LOGGER.error(f"Failed to start round: {response.status}")
             except Exception as e:
                 LOGGER.error(f"Error starting round: {e}")
-            for remaining in range(POST_INTERVAL_SECONDS, 0, -1):
-                LOGGER.info(f"Next judge in {remaining}s...")
+            for judge_timer_remaining in range(POST_INTERVAL_SECONDS, 0, -1):
+                LOGGER.info(f"Next judge in {judge_timer_remaining}s...")
                 await asyncio.sleep(1)
             
             if not self.p1_messages and not self.p2_messages:
@@ -212,7 +215,7 @@ class MinimalTwitchBot(commands.AutoBot):
             except Exception as e:
                 LOGGER.error(f"Failed to post to cloud function: {e}")
 
-    async def _process_player_summary(self, player: str, messages: dict):
+    async def _process_player_summary(self, player: Figther, messages: dict):
         """Process summary for a single player"""
         try:
             async with aiohttp.ClientSession() as session:
@@ -222,10 +225,18 @@ class MinimalTwitchBot(commands.AutoBot):
                     headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "x-role": "summary"}
                 ) as response:
                     if response.status == 200:
-                        LOGGER.info(f"got {player} summary")
+                        LOGGER.info(f"got {player.name} summary")
                         response_text = await response.text()
-                        LOGGER.info(f"Summary response ({response.status}) {player}: {response_text}")             
+                        LOGGER.info(f"Summary response ({response.status}) {player.name}: {response_text}")             
                         await self._update_player_thinking(player, response_text)
+                        # if timer is > 15 seconds, call localhost: http://0.0.0.0:8001/tts?text={response_text}
+                        if judge_timer_remaining > 10:
+                            async with aiohttp.ClientSession() as session:
+                                async with session.get(f"http://0.0.0.0:8001/tts?text={"...what" + player.name} is considering: {response_text}") as response:
+                                    if response.status == 200:
+                                        LOGGER.info("Successfully called TTS endpoint")
+                                    else:
+                                        LOGGER.warning(f"TTS endpoint call failed: {response.status}")
                     else:
                         LOGGER.warning(f"get {player} summary failed: {response.status}")
                 
@@ -241,14 +252,13 @@ class MinimalTwitchBot(commands.AutoBot):
             if not self.p1_messages and not self.p2_messages:
                 continue
 
-            # Process both players
             if self.p1_messages:
-                await self._process_player_summary("P1", self.p1_messages)
+                await self._process_player_summary(game_state.p1, self.p1_messages)
             
             await asyncio.sleep(9)
              
             if self.p2_messages:
-                await self._process_player_summary("P2", self.p2_messages)
+                await self._process_player_summary(game_state.p2, self.p2_messages)
 
     async def _update_server_state(self):
         """Update server state via REST call"""
@@ -271,19 +281,19 @@ class MinimalTwitchBot(commands.AutoBot):
         except Exception as e:
             LOGGER.error(f"Failed to update server state: {e}")
 
-    async def _update_player_thinking(self, player: str, thoughts: str):
+    async def _update_player_thinking(self, player: Figther, thoughts: str):
         """Update player thinking via REST call"""
         try:
             think_url = f"{SERVER_URL}/think"
-            think_params = {"player": player, "thoughts": thoughts}
+            think_params = {"player": "P1" if player.name == game_state.p1.name else "P2", "thoughts": thoughts}
             async with aiohttp.ClientSession() as think_session:
                 async with think_session.get(think_url, params=think_params) as think_response:
                     if think_response.status == 200:
-                        LOGGER.info(f"Successfully updated {player} thinking")
+                        LOGGER.info(f"Successfully updated {player.name} thinking")
                     else:
-                        LOGGER.warning(f"{player} think update failed: {think_response.status}")
+                        LOGGER.warning(f"{player.name} think update failed: {think_response.status}")
         except Exception as e:
-            LOGGER.error(f"Failed to update {player} thinking: {e}")
+            LOGGER.error(f"Failed to update {player.name} thinking: {e}")
 
 
 class MessageHandler(commands.Component):
