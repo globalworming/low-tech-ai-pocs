@@ -226,6 +226,8 @@ class MinimalTwitchBot(commands.AutoBot):
                 LOGGER.error(f"Failed to post to cloud function: {e}")
 
     async def _process_player_summary(self, player: Fighter, messages: dict):
+        if self.remaining <= 10:
+            return
         """Process summary for a single player"""
         try:
             async with aiohttp.ClientSession() as session:
