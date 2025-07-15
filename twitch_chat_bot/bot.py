@@ -369,6 +369,8 @@ class GameStateMessageHandler(commands.Component):
                 LOGGER.info(f"Game state set: {p1} vs {p2}")
                 if hasattr(self.bot, "judge_task") and self.bot.judge_task:
                     self.bot.judge_task.cancel()
+                self.bot.p1_messages.clear()
+                self.bot.p2_messages.clear()
                 self.bot.judge_task = asyncio.create_task(self.bot.periodic_jugdgement_post())
 
 
