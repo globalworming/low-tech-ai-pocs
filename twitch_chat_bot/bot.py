@@ -243,7 +243,10 @@ class MinimalTwitchBot(commands.AutoBot):
                         await self._update_player_thinking(player, response_text)
                         if self.remaining > 10:
                             text = f"{player.name} considers: {response_text}"
-                            await self._tts(text)
+                            try:
+                                await self._tts(text)
+                            except Exception as e:
+                                LOGGER.warning(f"get {player} summary failed: {response.status}")
                     else:
                         LOGGER.warning(f"get {player} summary failed: {response.status}")
                 
@@ -262,7 +265,6 @@ class MinimalTwitchBot(commands.AutoBot):
                     else:
                         raise Exception(f"Failed to call TTS endpoint: {response.status} - {await response.text()}")
         except Exception as e:
-            LOGGER.error(f"Failed to call TTS endpoint: {e}")
             raise e
 
     async def periodic_summary_post(self):
