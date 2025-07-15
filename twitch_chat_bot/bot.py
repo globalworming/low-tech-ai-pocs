@@ -189,7 +189,6 @@ class MinimalTwitchBot(commands.AutoBot):
                     try:    
                         await self._tts(summary_text)
                     except Exception as e:
-                        LOGGER.error(f"Failed to call TTS endpoint: {e}")
                         await asyncio.sleep(min(60, len(summary_text) / 8))
                 else:
                     await asyncio.sleep(min(60, len(summary_text) / 8))
@@ -264,6 +263,7 @@ class MinimalTwitchBot(commands.AutoBot):
                         LOGGER.warning(f"TTS endpoint call failed: {response.status}")
         except Exception as e:
             LOGGER.error(f"Failed to call TTS endpoint: {e}")
+            raise e
 
     async def periodic_summary_post(self):
         """Post messages to cloud function"""
