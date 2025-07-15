@@ -260,7 +260,7 @@ class MinimalTwitchBot(commands.AutoBot):
                     if response.status == 200:
                         LOGGER.info("Successfully called TTS endpoint")
                     else:
-                        LOGGER.warning(f"TTS endpoint call failed: {response.status}")
+                        raise Exception(f"Failed to call TTS endpoint: {response.status} - {await response.text()}")
         except Exception as e:
             LOGGER.error(f"Failed to call TTS endpoint: {e}")
             raise e
