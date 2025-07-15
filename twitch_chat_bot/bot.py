@@ -8,7 +8,7 @@ import asyncio
 import logging
 import aiohttp
 from typing import Dict, TYPE_CHECKING
-from datetime import datetime
+from database import setup_database
 import asqlite
 import twitchio
 from twitchio import eventsub
@@ -53,7 +53,8 @@ class MinimalTwitchBot(commands.AutoBot):
 
     async def setup_hook(self) -> None:
         # Add our message handler component
-        await self.add_component(MessageHandler(self))
+        await self.add_component(DescriptionMessageHandler(self))
+        await self.add_component(GameStateMessageHandler(self))
         # Start periodic tasks
         self.judge_task = asyncio.create_task(self.periodic_jugdgement_post())
         self.summary_task = asyncio.create_task(self.periodic_summary_post())
@@ -115,7 +116,7 @@ class MinimalTwitchBot(commands.AutoBot):
                 LOGGER.error(f"Error starting round: {e}")
             for remaining in range(POST_INTERVAL_SECONDS, 0, -1):
                 self.remaining = remaining
-                LOGGER.info(f"Next judge in {remaining}s...")
+                #LOGGER.info(f"Next judge in {remaining}s...")
                 await asyncio.sleep(1)
             self.remaining = 0
             
@@ -318,14 +319,14 @@ class MinimalTwitchBot(commands.AutoBot):
             LOGGER.error(f"Failed to update {player.name} thinking: {e}")
 
 
-class MessageHandler(commands.Component):
+class DescriptionMessageHandler(commands.Component):
     def __init__(self, bot: MinimalTwitchBot):
         self.bot = bot
 
     @commands.Component.listener()
     async def event_message(self, payload: twitchio.ChatMessage) -> None:
         # Log all messages
-        LOGGER.info(f"[{payload.broadcaster.name}] - {payload.chatter.name}: {payload.text}")
+        #LOGGER.info(f"[{payload.broadcaster.name}] - {payload.chatter.name}: {payload.text}")
         
         content = payload.text.strip()
         username = payload.chatter.name
@@ -342,22 +343,32 @@ class MessageHandler(commands.Component):
             self.bot.p2_messages[username] = p2_content
             LOGGER.info(f"Stored P2 from {username}: {p2_content}")
 
-async def setup_database(db: asqlite.Pool) -> tuple[list[tuple[str, str]], list[eventsub.SubscriptionPayload]]:
-    """Setup token database and return existing tokens/subscriptions"""
-    query = """CREATE TABLE IF NOT EXISTS tokens(user_id TEXT PRIMARY KEY, token TEXT NOT NULL, refresh TEXT NOT NULL)"""
-    
-    async with db.acquire() as connection:
-        await connection.execute(query)
-        rows: list[sqlite3.Row] = await connection.fetchall("""SELECT * from tokens""")
+import re
+from game_state import game_state
+
+class GameStateMessageHandler(commands.Component):
+    def __init__(self, bot: MinimalTwitchBot):
+        self.bot = bot
+
+    @commands.Component.listener()
+    async def event_message(self, payload: twitchio.ChatMessage) -> None:
+        # Log all messages
+        #LOGGER.info(f"[{payload.broadcaster.name}] - {payload.chatter.name}: {payload.text}")
         
-        tokens = []
-        subs = []
-        
-        for row in rows:
-            tokens.append((row["token"], row["refresh"]))
-            subs.extend([eventsub.ChatMessageSubscription(broadcaster_user_id=row["user_id"], user_id=BOT_ID)])
-    
-    return tokens, subs
+        content = payload.text.strip()
+        content = content.strip()[:MESSAGE_MAX_LENGTH]
+        username = payload.chatter.name
+        if username == "globalworming":
+            LOGGER.info(f"{username}: {content}")
+            match = re.match(r"^game (.*) vs (.*)$", content, re.IGNORECASE)
+            if match:
+                p1, p2 = match.group(1).strip(), match.group(2).strip()
+                game_state.set_players(p1, p2)
+                LOGGER.info(f"Game state set: {p1} vs {p2}")
+                if hasattr(self.bot, "judge_task") and self.bot.judge_task:
+                    self.bot.judge_task.cancel()
+                self.bot.judge_task = asyncio.create_task(self.bot.periodic_jugdgement_post())
+
 
 def main() -> None:
     twitchio.utils.setup_logging(level=logging.INFO)
