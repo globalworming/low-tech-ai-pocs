@@ -57,7 +57,7 @@ class MinimalTwitchBot(commands.AutoBot):
         await self.add_component(GameStateMessageHandler(self))
         await self.add_component(SimpleCommands(self))
 
-         # Start periodic tasks
+        # Start periodic tasks
         self.judge_task = asyncio.create_task(self.periodic_jugdgement_post())
         self.summary_task = asyncio.create_task(self.periodic_summary_post())
 
@@ -331,14 +331,14 @@ class SimpleCommands(commands.Component):
     
     @commands.command(name="commands")
     async def help(self, ctx: commands.Context):
-      await ctx.send(f"test")
+        await ctx.send("command: !p1 <msg> - use to set left description; !p2 <msg> - use to set right description; !commands to show this message")
 
     @commands.command()
     async def p1(self, ctx: commands.Context, *, content: str = ""):
         """Store P1 message for the user"""
         username = ctx.author.name
         p1_content = content.strip()[:MESSAGE_MAX_LENGTH]
-        self.p1_messages[username] = p1_content
+        self.bot.p1_messages[username] = p1_content
         LOGGER.info(f"Stored P1 from {username}: {p1_content}")
     
     @commands.command()
@@ -346,7 +346,7 @@ class SimpleCommands(commands.Component):
         """Store P2 message for the user"""
         username = ctx.author.name
         p2_content = content.strip()[:MESSAGE_MAX_LENGTH]
-        self.p2_messages[username] = p2_content
+        self.bot.p2_messages[username] = p2_content
         LOGGER.info(f"Stored P2 from {username}: {p2_content}")
 
 
