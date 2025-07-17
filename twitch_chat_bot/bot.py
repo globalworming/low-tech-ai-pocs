@@ -366,11 +366,13 @@ class GameStateMessageHandler(commands.Component):
             if match:
                 p1, p2 = match.group(1).strip(), match.group(2).strip()
                 game_state.set_players(p1, p2)
+                game_state.reset_game()
                 LOGGER.info(f"Game state set: {p1} vs {p2}")
-                if hasattr(self.bot, "judge_task") and self.bot.judge_task:
-                    self.bot.judge_task.cancel()
                 self.bot.p1_messages.clear()
                 self.bot.p2_messages.clear()
+                LOGGER.info(f"Messages cleared")
+                if hasattr(self.bot, "judge_task") and self.bot.judge_task:
+                    self.bot.judge_task.cancel()
                 self.bot.judge_task = asyncio.create_task(self.bot.periodic_jugdgement_post())
 
 
