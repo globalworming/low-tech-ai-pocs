@@ -15,14 +15,20 @@ interface = outetts.Interface(
 
 )
 
-speaker =interface.create_speaker("untitled.wav")
-interface.save_speaker(speaker, "my_speaker.json")
-speaker = interface.load_speaker("my_speaker.json")
+#speaker =interface.create_speaker("speak.wav")
+#interface.save_speaker(speaker, "speak.json")
+#speaker =interface.create_speaker("shout.wav")
+#interface.save_speaker(speaker, "shout.json")
+#speaker =interface.create_speaker("summary.wav")
+#interface.save_speaker(speaker, "summary.json")
+
+speaker = interface.load_speaker("speak.json")
 
 output = interface.generate(
     config=outetts.GenerationConfig(
-        text="Olivia Wins! The exploding sheep to the face was too much. See you all next time for the... WORMS RUMBLE!!!",
-        speaker=speaker
+        text="Welcome folks, glad you could make it. Next round starts in 5 seconds!",
+        speaker=speaker,
+        generation_type=outetts.GenerationType.GUIDED_WORDS,
     )
 )
 

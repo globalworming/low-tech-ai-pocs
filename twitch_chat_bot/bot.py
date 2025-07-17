@@ -9,6 +9,8 @@ import logging
 import aiohttp
 from typing import Dict, TYPE_CHECKING
 from database import setup_database
+from elevenlabs import play
+from urllib.parse import quote
 import asqlite
 import twitchio
 from twitchio import eventsub
@@ -329,6 +331,10 @@ class SimpleCommands(commands.Component):
     def __init__(self, bot: MinimalTwitchBot) -> None:
         self.bot = bot
     
+    @commands.command(name="")
+    async def help(self, ctx: commands.Context):
+        pass
+
     @commands.command(name="commands")
     async def help(self, ctx: commands.Context):
         await ctx.send("command: !p1 <msg> - use to set left description; !p2 <msg> - use to set right description; !commands to show this message")
@@ -348,6 +354,23 @@ class SimpleCommands(commands.Component):
         p2_content = content.strip()[:MESSAGE_MAX_LENGTH]
         self.bot.p2_messages[username] = p2_content
         LOGGER.info(f"Stored P2 from {username}: {p2_content}")
+
+    @commands.command()
+    async def speak(self, ctx: commands.Context, *, content: str = ""):
+        if ctx.chatter.name != "globalworming":
+            return
+        """Play text to speech"""
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(f"http://schrank:8002/tts?text={quote(content)}&speakerJson=summary.json") as response:
+                    if response.status == 200:
+                        LOGGER.info("Successfully called TTS endpoint")
+                        wav_bytes = await response.read()
+                        play(wav_bytes)
+                    else:
+                        raise Exception(f"Failed to call TTS endpoint: {response.status} - {await response.text()}")
+        except Exception as e:
+            raise e
 
 
 class GameStateMessageHandler(commands.Component):
