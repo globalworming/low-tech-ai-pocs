@@ -53,9 +53,11 @@ class MinimalTwitchBot(commands.AutoBot):
 
     async def setup_hook(self) -> None:
         # Add our message handler component
-        await self.add_component(DescriptionMessageHandler(self))
+
         await self.add_component(GameStateMessageHandler(self))
-        # Start periodic tasks
+        await self.add_component(SimpleCommands(self))
+
+         # Start periodic tasks
         self.judge_task = asyncio.create_task(self.periodic_jugdgement_post())
         self.summary_task = asyncio.create_task(self.periodic_summary_post())
 
@@ -93,9 +95,8 @@ class MinimalTwitchBot(commands.AutoBot):
 
     async def event_ready(self) -> None:
         LOGGER.debug("Bot ready | Bot ID: %s", self.bot_id)
-
-
-
+        LOGGER.info(f"Registered commands: {list(self.commands.keys())}")
+    
     async def periodic_jugdgement_post(self):
         """Post messages to cloud function"""
         while True:
@@ -320,33 +321,34 @@ class MinimalTwitchBot(commands.AutoBot):
         except Exception as e:
             LOGGER.error(f"Failed to update {player.name} thinking: {e}")
 
-
-class DescriptionMessageHandler(commands.Component):
-    def __init__(self, bot: MinimalTwitchBot):
-        self.bot = bot
-
-    @commands.Component.listener()
-    async def event_message(self, payload: twitchio.ChatMessage) -> None:
-        # Log all messages
-        #LOGGER.info(f"[{payload.broadcaster.name}] - {payload.chatter.name}: {payload.text}")
-        
-        content = payload.text.strip()
-        username = payload.chatter.name
-        
-        # Store P1 messages
-        if content.startswith('!p1'):
-            p1_content = content[3:].strip()[:MESSAGE_MAX_LENGTH]
-            self.bot.p1_messages[username] = p1_content
-            LOGGER.info(f"Stored P1 from {username}: {p1_content}")
-            
-        # Store P2 messages  
-        elif content.startswith('!p2'):
-            p2_content = content[3:].strip()[:MESSAGE_MAX_LENGTH]
-            self.bot.p2_messages[username] = p2_content
-            LOGGER.info(f"Stored P2 from {username}: {p2_content}")
-
 import re
 from game_state import game_state
+
+class SimpleCommands(commands.Component):
+
+    def __init__(self, bot: MinimalTwitchBot) -> None:
+        self.bot = bot
+    
+    @commands.command(name="commands")
+    async def help(self, ctx: commands.Context):
+      await ctx.send(f"test")
+
+    @commands.command()
+    async def p1(self, ctx: commands.Context, *, content: str = ""):
+        """Store P1 message for the user"""
+        username = ctx.author.name
+        p1_content = content.strip()[:MESSAGE_MAX_LENGTH]
+        self.p1_messages[username] = p1_content
+        LOGGER.info(f"Stored P1 from {username}: {p1_content}")
+    
+    @commands.command()
+    async def p2(self, ctx: commands.Context, *, content: str = ""):
+        """Store P2 message for the user"""
+        username = ctx.author.name
+        p2_content = content.strip()[:MESSAGE_MAX_LENGTH]
+        self.p2_messages[username] = p2_content
+        LOGGER.info(f"Stored P2 from {username}: {p2_content}")
+
 
 class GameStateMessageHandler(commands.Component):
     def __init__(self, bot: MinimalTwitchBot):
