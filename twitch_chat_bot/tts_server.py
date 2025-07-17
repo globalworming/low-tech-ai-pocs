@@ -78,7 +78,7 @@ async def startup_event():
     print("TTS Server started successfully!")
 
 @app.get("/tts")
-async def get_tts(text: str = Query(..., description="Text to convert to speech"), speakerJson: str = "speak.json"):
+async def get_tts(text: str = Query(..., description="Text to convert to speech"), speakerJson: str = "summary.json"):
     """
     Get TTS audio for the given text.
     
