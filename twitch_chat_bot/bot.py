@@ -334,13 +334,13 @@ class DescriptionMessageHandler(commands.Component):
         username = payload.chatter.name
         
         # Store P1 messages
-        if content.startswith('P1:'):
+        if content.startswith('!p1'):
             p1_content = content[3:].strip()[:MESSAGE_MAX_LENGTH]
             self.bot.p1_messages[username] = p1_content
             LOGGER.info(f"Stored P1 from {username}: {p1_content}")
             
         # Store P2 messages  
-        elif content.startswith('P2:'):
+        elif content.startswith('!p2'):
             p2_content = content[3:].strip()[:MESSAGE_MAX_LENGTH]
             self.bot.p2_messages[username] = p2_content
             LOGGER.info(f"Stored P2 from {username}: {p2_content}")
