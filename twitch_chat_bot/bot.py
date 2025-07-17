@@ -362,7 +362,7 @@ class SimpleCommands(commands.Component):
         """Play text to speech"""
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(f"http://schrank:8002/tts?text={quote(content)}&speakerJson=summary.json") as response:
+                async with session.get(f"http://t431s:8002/tts?text={quote(content)}&speakerJson=summary.json") as response:
                     if response.status == 200:
                         LOGGER.info("Successfully called TTS endpoint")
                         wav_bytes = await response.read()
