@@ -6,11 +6,9 @@ Minimal Twitch Chat Bot using AutoBot
 """
 import asyncio
 import logging
-from random import random
+from random import choice
 import aiohttp
-from typing import Dict, TYPE_CHECKING
-from elevenlabs import play
-from urllib.parse import quote
+from typing import Dict
 import asqlite
 import twitchio
 from twitchio import eventsub
@@ -56,11 +54,10 @@ class MinimalTwitchBot(commands.AutoBot):
         # Add our message handler component
         await self.add_component(GameStateMessageHandler(self))
         await self.add_component(SimpleCommands(self))
-
         # Start periodic tasks
         self.judge_task = asyncio.create_task(self.periodic_jugdgement_post())
         self.summary_task = asyncio.create_task(self.periodic_summary_post())
-
+     
     async def event_oauth_authorized(self, payload: twitchio.authentication.UserTokenPayload) -> None:
         await self.add_token(payload.access_token, payload.refresh_token)
 
@@ -262,8 +259,7 @@ class MinimalTwitchBot(commands.AutoBot):
         while True:
             if not self.p1_messages and not self.p2_messages:
                 continue
-
-            p1_first = random.choice([True, False])
+            p1_first = choice([True, False])
             if game_state.p1.health > game_state.p2.health:
                 p1_first = False
             elif game_state.p2.health > game_state.p1.health:
