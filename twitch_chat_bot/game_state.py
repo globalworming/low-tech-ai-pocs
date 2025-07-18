@@ -65,14 +65,19 @@ class GameState:
         self.p1.name = p1_name
         self.p2.name = p2_name
         self.reset_game()
+        self.reset_wins()
         LOGGER.info(f"Set players: {p1_name} vs {p2_name}")
+    
+    def reset_wins(self) -> None:
+        """Reset player wins to 0"""
+        self.p1.reset_wins()
+        self.p2.reset_wins()
+        LOGGER.info(f"Wins reset")
     
     def reset_game(self) -> None:
         """Reset the game state"""
         self.p1.reset_health()
         self.p2.reset_health()
-        self.p1.reset_wins()
-        self.p2.reset_wins()
         LOGGER.info(f"Game reset")
     
     def end_game(self, winner: Optional[Fighter] = None) -> None:

@@ -423,7 +423,6 @@ class GameStateMessageHandler(commands.Component):
             if match:
                 p1, p2 = match.group(1).strip(), match.group(2).strip()
                 game_state.set_players(p1, p2)
-                game_state.reset_game()
                 LOGGER.info(f"Game state set: {p1} vs {p2}")
                 self.bot.p1_messages.clear()
                 self.bot.p2_messages.clear()
