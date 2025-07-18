@@ -105,6 +105,7 @@ class MinimalTwitchBot(commands.AutoBot):
             await self._update_server_state()
             await self._update_player_thinking(game_state.p1, "what next...")
             await self._update_player_thinking(game_state.p2, "what next...")
+            await self._hide_summary()
             
             # Start new round
             try:
@@ -170,7 +171,6 @@ class MinimalTwitchBot(commands.AutoBot):
                 if not summary_text.lower().endswith("draw"):
                     summary_text += " wins!!!"
 
-               
                 try:
                     show_url = f"{SERVER_URL}/show"
                     show_params = {"summary": summary_text}
@@ -198,18 +198,7 @@ class MinimalTwitchBot(commands.AutoBot):
 
                 await asyncio.sleep(2)
                 
-                # hide summary modal via REST call
-                try:
-                    hide_url = f"{SERVER_URL}/hide"
-                    async with aiohttp.ClientSession() as hide_session:
-                        async with hide_session.get(hide_url) as hide_response:
-                            if hide_response.status == 200:
-                                LOGGER.info("Successfully hidden summary modal")
-                            else:
-                                LOGGER.warning(f"Summary modal hide failed: {hide_response.status}")
-                except Exception as e:
-                    LOGGER.error(f"Failed to hide summary modal: {e}")
-
+                await self._hide_summary()
                 # wait a bit before starting next one
                 await asyncio.sleep(2)
 
@@ -322,6 +311,18 @@ class MinimalTwitchBot(commands.AutoBot):
                         LOGGER.warning(f"{player.name} think update failed: {think_response.status}")
         except Exception as e:
             LOGGER.error(f"Failed to update {player.name} thinking: {e}")
+
+    async def _hide_summary(self):
+        try:
+            hide_url = f"{SERVER_URL}/hide"
+            async with aiohttp.ClientSession() as hide_session:
+                async with hide_session.get(hide_url) as hide_response:
+                    if hide_response.status == 200:
+                        LOGGER.info("Successfully hidden summary modal")
+                    else:
+                        LOGGER.warning(f"Summary modal hide failed: {hide_response.status}")
+        except Exception as e:
+            LOGGER.error(f"Failed to hide summary modal: {e}")
 
 import re
 from game_state import game_state
