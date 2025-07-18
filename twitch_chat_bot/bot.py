@@ -230,7 +230,7 @@ class MinimalTwitchBot(commands.AutoBot):
                     headers={"Content-Type": "application/json", "Authorization": f"Bearer {JUDGE_CLOUD_FUNCTION_TOKEN}", "x-role": "summary"}
                 ) as response:
                     if response.status == 200:
-                        LOGGER.info(f"got {player} summary")
+                        #LOGGER.info(f"got {player} summary")
                         response_text = await response.text()
                         LOGGER.info(f"Summary response ({response.status}) {player}: {response_text}")             
                         await self._update_player_thinking(player, response_text)

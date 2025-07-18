@@ -21,6 +21,11 @@ class Fighter:
         self.health = health
         LOGGER.info(f"Reset {self.name}'s health to {health}")
     
+    def reset_wins(self) -> None:
+        """Reset player wins to 0"""
+        self.wins = 0
+        LOGGER.info(f"Reset {self.name}'s wins to 0")
+
     def take_damage(self, damage: int) -> None:
         """Apply damage to player"""
         self.health = max(0, self.health - damage)
@@ -66,6 +71,8 @@ class GameState:
         """Reset the game state"""
         self.p1.reset_health()
         self.p2.reset_health()
+        self.p1.reset_wins()
+        self.p2.reset_wins()
         LOGGER.info(f"Game reset")
     
     def end_game(self, winner: Optional[Fighter] = None) -> None:
