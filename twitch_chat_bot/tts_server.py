@@ -121,7 +121,7 @@ async def get_tts(text: str = Query(..., description="Text to convert to speech"
     
     raise HTTPException(
         status_code=503,
-        detail="Audio generation started, please try again in a few seconds"
+        detail="Audio generation started, try again in 3 minutes or post the same message again to play it as soon as it is ready"
     )
 
 @app.get("/status")
