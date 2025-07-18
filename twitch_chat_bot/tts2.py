@@ -28,7 +28,7 @@ output = interface.generate(
     config=outetts.GenerationConfig(
         text="Welcome folks, glad you could make it. Next round starts in 5 seconds!",
         speaker=speaker,
-        generation_type=outetts.GenerationType.GUIDED_WORDS,
+        #generation_type=outetts.GenerationType.GUIDED_WORDS,
     )
 )
 
