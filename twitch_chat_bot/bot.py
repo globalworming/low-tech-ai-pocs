@@ -8,7 +8,7 @@ import asyncio
 import logging
 import aiohttp
 from typing import Dict, TYPE_CHECKING
-from random import choice
+import random
 from database import setup_database
 from elevenlabs import play
 from urllib.parse import quote
@@ -261,24 +261,29 @@ class MinimalTwitchBot(commands.AutoBot):
             raise e
 
     async def periodic_summary_post(self):
-        """Post messages to cloud function"""
         while True:
-            
-            await asyncio.sleep(8)
-            
             if not self.p1_messages and not self.p2_messages:
+                await asyncio.sleep(1)
                 continue
+            p1_first = random.choice([True, False])
+            if game_state.p1.health > game_state.p2.health:
+                p1_first = False
+            elif game_state.p2.health > game_state.p1.health:
+                p1_first = True
 
-            # Process both players
-            if self.p1_messages:
-                await self._process_player_summary(game_state.p1, self.p1_messages)
-            
-            await asyncio.sleep(9)
-             
-            if self.p2_messages:
-                await self._process_player_summary(game_state.p2, self.p2_messages)
-
-
+            if p1_first:
+                if self.p1_messages:
+                    await self._process_player_summary(game_state.p1, self.p1_messages)
+                    await asyncio.sleep(10)            
+                if self.p2_messages:
+                    await self._process_player_summary(game_state.p2, self.p2_messages)
+            else:
+                if self.p2_messages:
+                    await self._process_player_summary(game_state.p2, self.p2_messages)
+                    await asyncio.sleep(10)
+                if self.p1_messages:
+                    await self._process_player_summary(game_state.p1, self.p1_messages)
+            await asyncio.sleep(10)
             
     async def _update_server_state(self):
         """Update server state via REST call"""
